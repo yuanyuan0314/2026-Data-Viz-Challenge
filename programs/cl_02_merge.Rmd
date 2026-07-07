@@ -1,0 +1,94 @@
+---
+title: "cl_02_merge"
+author: "Yuanyuan Wen"
+date: "2026-07-07"
+output: html_document
+---
+## Purpose
+
+The goal of this code here:
+standardizes both keys to a 5-digit county FIPS and joins them into one county-level table for the index construction
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Load the library
+```{r}
+library(readr)     # reads the csv files (and lets us fix the messy one below)
+library(dplyr)     # regular data wrangling once things look like data frames
+```
+
+### Step 1
+Read the nearest-hub distance data.
+
+note: `hub_distance_full.csv` was written with `write.csv()` from an sf object in cl_01, so it carries two quirks. First, `write.csv()` adds an unnamed row-index column at the front. Second, the last column `geometry` is an R point printed as an **unquoted** vector `c(x, y)` (the county centroid), whose internal comma splits every row into 13 fields while the header only has 12 names. Every row splits the same way, so we simply supply our own 13 column names and read positionally (skipping the original header).
+
+```{r}
+names_hub <- c("rowidx", "GEOID", "state", "county_name", "distance_nearest_hub_mile",
+               "nearest_hub_name", "nearest_hub_id", "hub_county_geoid", "hub_county_name",
+               "hub_products", "hub_desert", "centroid_x", "centroid_y")
+
+hub_raw <- read_csv("../data/outcome/hub_distance_full.csv",
+                    skip = 1, col_names = names_hub,
+                    col_types = cols(.default = col_character()))
+
+hub_distance <- hub_raw %>%
+  select(-rowidx) %>%                                   # drop the write.csv row index
+  mutate(
+    distance_nearest_hub_mile = as.numeric(distance_nearest_hub_mile),
+    # the split "c(x" / "y)" pieces are cleaned back into the centroid numbers
+    centroid_x  = as.numeric(gsub("[^0-9.eE+-]", "", centroid_x)),
+    centroid_y  = as.numeric(gsub("[^0-9.eE+-]", "", centroid_y)),
+    county_fips = sprintf("%05d", as.integer(GEOID))    # 5-digit county FIPS key
+  )
+
+#glimpse(hub_distance)
+```
+
+### Step 2
+Read SPMA_index_variables.csv (filtered from FAME 2.0). fips is stored as a numeric, so states with FIPS codes below 10 lose their leading zero (e.g., `1001` instead of `01001`). We read it as a character and pad to a 5-digit key.
+
+```{r}
+spma <- read_csv("../data/source/SPMA_index_variables.csv",
+                 col_types = cols(fips = col_character())) %>%
+  mutate(county_fips = sprintf("%05d", as.integer(fips)))
+
+#glimpse(spma)
+```
+
+**validation**: both files should be one row per county, and their keys should line up.
+```{r}
+c(hub_rows = nrow(hub_distance),  hub_keys  = n_distinct(hub_distance$county_fips),
+  spma_rows = nrow(spma),         spma_keys = n_distinct(spma$county_fips))
+
+# how many counties are shared / only on one side
+length(intersect(hub_distance$county_fips, spma$county_fips))
+setdiff(hub_distance$county_fips, spma$county_fips)   # only in hub_distance
+setdiff(spma$county_fips, hub_distance$county_fips)   # only in SPMA
+```
+
+### Step 3
+Join the two tables on the county FIPS key. Because both share a `county_name` column, we suffix them so nothing is silently overwritten.
+
+```{r}
+hub_distance_spma <- hub_distance %>%
+  inner_join(spma, by = "county_fips", suffix = c("_hub", "_spma")) %>%
+  relocate(county_fips)
+
+# (number of counties) x (number of variables)
+dim(hub_distance_spma)
+```
+
+# look at the joined table
+```{r}
+glimpse(hub_distance_spma)
+```
+
+### save the dataset
+note: Save with row.names = FALSE to avoid writing an unnamed index column that would complicate later reads.
+```{r}
+write.csv(hub_distance_spma,
+          "../data/outcome/hub_distance_SPMA_merged.csv",
+          row.names = FALSE)
+```
