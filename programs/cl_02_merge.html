@@ -359,9 +359,11 @@ display: none;
 
 <div id="purpose" class="section level2">
 <h2>Purpose</h2>
-<p>The goal of this code here: standardizes both keys to a 5-digit
-county FIPS and joins them into one county-level table for the index
-construction</p>
+<p>The goal of this code here: standardize the keys to a 5-digit county
+FIPS and join the three county-level pieces — the nearest food-hub
+distance (cl_01_distance), the nearest farmers-market distance
+(cl_01_farmersmarket_distance), and the SPMA index variables — into one
+table for the index construction.</p>
 <p>Load the library</p>
 <pre class="r"><code>library(readr)     # reads the csv files (and lets us fix the messy one below)
 library(dplyr)     # regular data wrangling once things look like data frames</code></pre>
@@ -417,13 +419,43 @@ read it as a character and pad to a 5-digit key.</p>
   mutate(county_fips = sprintf(&quot;%05d&quot;, as.integer(fips)))
 
 #glimpse(spma)</code></pre>
-<p><strong>validation</strong>: both files should be one row per county,
-and their keys should line up.</p>
-<pre class="r"><code>c(hub_rows = nrow(hub_distance),  hub_keys  = n_distinct(hub_distance$county_fips),
-  spma_rows = nrow(spma),         spma_keys = n_distinct(spma$county_fips))</code></pre>
-<pre><code>##  hub_rows  hub_keys spma_rows spma_keys 
-##      3144      3144      3144      3144</code></pre>
-<pre class="r"><code># how many counties are shared / only on one side
+</div>
+<div id="step-3" class="section level3">
+<h3>Step 3</h3>
+<p>Read the nearest farmers-market distance (from
+cl_01_farmersmarket_distance).</p>
+<p>note: <code>farmersmarket_distance_full.csv</code> has the same
+<code>write.csv()</code> + geometry <code>c(x, y)</code> quirk (12 data
+fields vs 11 headers, with the split geometry landing in
+<code>geo_x</code> / <code>geo_y</code>), so we read it positionally too
+and keep only the farmers-market variables.</p>
+<pre class="r"><code>names_fm &lt;- c(&quot;rowidx&quot;, &quot;GEOID&quot;, &quot;state&quot;, &quot;county_name&quot;, &quot;geo_x&quot;, &quot;geo_y&quot;,
+              &quot;distance_nearest_farmersmarket_mile&quot;, &quot;nearest_farmersmarket_name&quot;,
+              &quot;nearest_farmersmarket_id&quot;, &quot;market_county_geoid&quot;, &quot;market_county_name&quot;,
+              &quot;farmersmarket_desert&quot;)
+
+fm &lt;- read_csv(&quot;../data/outcome/farmersmarket_distance_full.csv&quot;,
+               skip = 1, col_names = names_fm,
+               col_types = cols(.default = col_character())) %&gt;%
+  transmute(
+    county_fips = sprintf(&quot;%05d&quot;, as.integer(GEOID)),
+    distance_nearest_farmersmarket_mile = as.numeric(distance_nearest_farmersmarket_mile),
+    nearest_farmersmarket_name,
+    nearest_farmersmarket_id,
+    market_county_geoid,
+    market_county_name,
+    farmersmarket_desert = as.logical(farmersmarket_desert)
+  )
+
+#glimpse(fm)</code></pre>
+<p><strong>validation</strong>: all three pieces should be one row per
+county, and their keys should line up.</p>
+<pre class="r"><code>c(hub_rows = nrow(hub_distance), hub_keys = n_distinct(hub_distance$county_fips),
+  spma_rows = nrow(spma),        spma_keys = n_distinct(spma$county_fips),
+  fm_rows = nrow(fm),            fm_keys = n_distinct(fm$county_fips))</code></pre>
+<pre><code>##  hub_rows  hub_keys spma_rows spma_keys   fm_rows   fm_keys 
+##      3144      3144      3144      3144      3109      3109</code></pre>
+<pre class="r"><code># how many counties are shared across hub-distance and SPMA
 length(intersect(hub_distance$county_fips, spma$county_fips))</code></pre>
 <pre><code>## [1] 3144</code></pre>
 <pre class="r"><code>setdiff(hub_distance$county_fips, spma$county_fips)   # only in hub_distance</code></pre>
@@ -431,25 +463,26 @@ length(intersect(hub_distance$county_fips, spma$county_fips))</code></pre>
 <pre class="r"><code>setdiff(spma$county_fips, hub_distance$county_fips)   # only in SPMA</code></pre>
 <pre><code>## character(0)</code></pre>
 </div>
-<div id="step-3" class="section level3">
-<h3>Step 3</h3>
-<p>Join the two tables on the county FIPS key. Because both share a
-<code>county_name</code> column, we suffix them so nothing is silently
-overwritten.</p>
-<pre class="r"><code>hub_distance_spma &lt;- hub_distance %&gt;%
+<div id="step-4" class="section level3">
+<h3>Step 4</h3>
+<p>Join the three tables on the county FIPS key.
+<code>hub_distance</code> and <code>fm</code> share <code>state</code> /
+<code>county_name</code> columns, so we suffix to keep everything.</p>
+<pre class="r"><code>merged &lt;- hub_distance %&gt;%
   inner_join(spma, by = &quot;county_fips&quot;, suffix = c(&quot;_hub&quot;, &quot;_spma&quot;)) %&gt;%
+  left_join(fm, by = &quot;county_fips&quot;, suffix = c(&quot;&quot;, &quot;_fm&quot;)) %&gt;%
   relocate(county_fips)
 
 # (number of counties) x (number of variables)
-dim(hub_distance_spma)</code></pre>
-<pre><code>## [1] 3144   39</code></pre>
+dim(merged)</code></pre>
+<pre><code>## [1] 3144   45</code></pre>
 </div>
 </div>
 <div id="look-at-the-joined-table" class="section level1">
 <h1>look at the joined table</h1>
-<pre class="r"><code>glimpse(hub_distance_spma)</code></pre>
+<pre class="r"><code>glimpse(merged)</code></pre>
 <pre><code>## Rows: 3,144
-## Columns: 39
+## Columns: 45
 ## $ county_fips                                                                &lt;chr&gt; …
 ## $ GEOID                                                                      &lt;chr&gt; …
 ## $ state                                                                      &lt;chr&gt; …
@@ -488,13 +521,19 @@ dim(hub_distance_spma)</code></pre>
 ## $ pct_households_with_no_vehicle                                             &lt;dbl&gt; …
 ## $ pct_laccess_lowi                                                           &lt;dbl&gt; …
 ## $ total_acres_operated                                                       &lt;dbl&gt; …
-## $ valueadded_farms_pct                                                       &lt;dbl&gt; …</code></pre>
+## $ valueadded_farms_pct                                                       &lt;dbl&gt; …
+## $ distance_nearest_farmersmarket_mile                                        &lt;dbl&gt; …
+## $ nearest_farmersmarket_name                                                 &lt;chr&gt; …
+## $ nearest_farmersmarket_id                                                   &lt;chr&gt; …
+## $ market_county_geoid                                                        &lt;chr&gt; …
+## $ market_county_name                                                         &lt;chr&gt; …
+## $ farmersmarket_desert                                                       &lt;lgl&gt; …</code></pre>
 <div id="save-the-dataset" class="section level3">
 <h3>save the dataset</h3>
 <p>note: Save with row.names = FALSE to avoid writing an unnamed index
 column that would complicate later reads.</p>
-<pre class="r"><code>write.csv(hub_distance_spma,
-          &quot;../data/outcome/hub_distance_SPMA_merged.csv&quot;,
+<pre class="r"><code>write.csv(merged,
+          &quot;../data/outcome/distance_SPMA_merged.csv&quot;,
           row.names = FALSE)</code></pre>
 </div>
 </div>

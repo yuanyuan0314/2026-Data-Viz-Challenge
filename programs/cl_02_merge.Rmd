@@ -7,7 +7,9 @@ output: html_document
 ## Purpose
 
 The goal of this code here:
-standardizes both keys to a 5-digit county FIPS and joins them into one county-level table for the index construction
+standardize the keys to a 5-digit county FIPS and join the three county-level pieces — the
+nearest food-hub distance (cl_01_distance), the nearest farmers-market distance
+(cl_01_farmersmarket_distance), and the SPMA index variables — into one table for the index construction.
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -57,38 +59,70 @@ spma <- read_csv("../data/source/SPMA_index_variables.csv",
 #glimpse(spma)
 ```
 
-**validation**: both files should be one row per county, and their keys should line up.
-```{r}
-c(hub_rows = nrow(hub_distance),  hub_keys  = n_distinct(hub_distance$county_fips),
-  spma_rows = nrow(spma),         spma_keys = n_distinct(spma$county_fips))
+### Step 3
+Read the nearest farmers-market distance (from cl_01_farmersmarket_distance).
 
-# how many counties are shared / only on one side
+note: `farmersmarket_distance_full.csv` has the same `write.csv()` + geometry `c(x, y)` quirk
+(12 data fields vs 11 headers, with the split geometry landing in `geo_x` / `geo_y`), so we
+read it positionally too and keep only the farmers-market variables.
+
+```{r}
+names_fm <- c("rowidx", "GEOID", "state", "county_name", "geo_x", "geo_y",
+              "distance_nearest_farmersmarket_mile", "nearest_farmersmarket_name",
+              "nearest_farmersmarket_id", "market_county_geoid", "market_county_name",
+              "farmersmarket_desert")
+
+fm <- read_csv("../data/outcome/farmersmarket_distance_full.csv",
+               skip = 1, col_names = names_fm,
+               col_types = cols(.default = col_character())) %>%
+  transmute(
+    county_fips = sprintf("%05d", as.integer(GEOID)),
+    distance_nearest_farmersmarket_mile = as.numeric(distance_nearest_farmersmarket_mile),
+    nearest_farmersmarket_name,
+    nearest_farmersmarket_id,
+    market_county_geoid,
+    market_county_name,
+    farmersmarket_desert = as.logical(farmersmarket_desert)
+  )
+
+#glimpse(fm)
+```
+
+**validation**: all three pieces should be one row per county, and their keys should line up.
+```{r}
+c(hub_rows = nrow(hub_distance), hub_keys = n_distinct(hub_distance$county_fips),
+  spma_rows = nrow(spma),        spma_keys = n_distinct(spma$county_fips),
+  fm_rows = nrow(fm),            fm_keys = n_distinct(fm$county_fips))
+
+# how many counties are shared across hub-distance and SPMA
 length(intersect(hub_distance$county_fips, spma$county_fips))
 setdiff(hub_distance$county_fips, spma$county_fips)   # only in hub_distance
 setdiff(spma$county_fips, hub_distance$county_fips)   # only in SPMA
 ```
 
-### Step 3
-Join the two tables on the county FIPS key. Because both share a `county_name` column, we suffix them so nothing is silently overwritten.
+### Step 4
+Join the three tables on the county FIPS key. `hub_distance` and `fm` share `state` /
+`county_name` columns, so we suffix to keep everything.
 
 ```{r}
-hub_distance_spma <- hub_distance %>%
+merged <- hub_distance %>%
   inner_join(spma, by = "county_fips", suffix = c("_hub", "_spma")) %>%
+  left_join(fm, by = "county_fips", suffix = c("", "_fm")) %>%
   relocate(county_fips)
 
 # (number of counties) x (number of variables)
-dim(hub_distance_spma)
+dim(merged)
 ```
 
 # look at the joined table
 ```{r}
-glimpse(hub_distance_spma)
+glimpse(merged)
 ```
 
 ### save the dataset
 note: Save with row.names = FALSE to avoid writing an unnamed index column that would complicate later reads.
 ```{r}
-write.csv(hub_distance_spma,
-          "../data/outcome/hub_distance_SPMA_merged.csv",
+write.csv(merged,
+          "../data/outcome/distance_SPMA_merged.csv",
           row.names = FALSE)
 ```

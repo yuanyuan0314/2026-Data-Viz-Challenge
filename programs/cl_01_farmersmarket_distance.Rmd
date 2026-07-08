@@ -7,7 +7,7 @@ output: html_document
 ## Purpose
 
 The goal of this code:
-Identify the distance from the centroid of each county to the nearest farmers market in the farmers market directory, using county centroid data from hub_distance_SPMA_merged.csv.
+Identify the distance from the centroid of each county to the nearest farmers market in the farmers market directory, using county centroid data from hub_distance_full.csv (the output of cl_01_distance).
 
 
 ```{r setup, include=FALSE}
@@ -29,19 +29,23 @@ library(readxl)
 library(units)
 ```
 
-### Get the county centroids from the merged dataset 
+### Get the county centroids from cl_01_distance's output
 ```{r}
-# EPSG:5070 (centroid_x, centroid_y), computed once in cl_01 and passed through
-merged <- read_csv("../data/outcome/hub_distance_SPMA_merged.csv")
+names_hub <- c("rowidx", "GEOID", "state", "county_name", "distance_nearest_hub_mile",
+               "nearest_hub_name", "nearest_hub_id", "hub_county_geoid", "hub_county_name",
+               "hub_products", "hub_desert", "centroid_x", "centroid_y")
 
-county_centroid <- merged %>%
-  transmute(GEOID       = sprintf("%05d", as.integer(county_fips)),
-            state       = state,
-            county_name = county_name_hub,
-            centroid_x, centroid_y) %>%
-  st_as_sf(coords = c("centroid_x", "centroid_y"), crs = 5070)   
-
-# 5070 = NAD83 Albers, in metres
+county_centroid <- read_csv("../data/outcome/hub_distance_full.csv",
+                            skip = 1, col_names = names_hub,
+                            col_types = cols(.default = col_character())) %>%
+  transmute(GEOID       = sprintf("%05d", as.integer(GEOID)),
+            state, county_name,
+            centroid_x  = as.numeric(gsub("[^0-9.eE+-]", "", centroid_x)),
+            centroid_y  = as.numeric(gsub("[^0-9.eE+-]", "", centroid_y))) %>%
+  # drop Alaska & Hawaii: they sit far outside EPSG:5070 (CONUS Albers), so distances
+  # computed for them in 5070 are distorted (e.g. an inflated ~1000-mile Aleutians value).
+  filter(!state %in% c("Alaska", "Hawaii")) %>%
+  st_as_sf(coords = c("centroid_x", "centroid_y"), crs = 5070)   # 5070 = NAD83 Albers, in metres
 ```
 
 
@@ -51,11 +55,6 @@ Load the dataset from the farmers market directory and calculate the distance fr
 note: if a farmers market does not exist in this county, we will map the distance to the closest farmers market around
 
 ```{r}
-
-# col_types = "text" tells readxl NOT to guess column types (the directory has a
-# column whose type is ambiguous, e.g. mostly blank/logical but "1" further down),
-# which otherwise floods the console with "Expecting logical ..." warnings.
-# We only keep 4 columns anyway and convert lon/lat to numeric below.
 market_raw <- read_excel("../data/source/farmersmarket_2026-623143939.xlsx",
                          col_types = "text")
 
@@ -74,9 +73,6 @@ make the markets spatial, and look up which county each market sits in
 ```{r}
 markets_sf <- st_as_sf(market_directory, coords = c("lon", "lat"), crs = 4326)
 
-# county polygons -> which county does each market fall in (used for market_county_* below)
-# progress_bar = FALSE stops tigris from printing its download progress bar, which
-# knitr would otherwise turn into hundreds of "====" lines in the report.
 options(tigris_use_cache = TRUE)   # cache the download so it is not re-fetched every run
 us_counties   <- counties(cb = TRUE, year = 2023, progress_bar = FALSE)
 county_lookup <- us_counties %>%
@@ -99,13 +95,13 @@ distance_market <- st_distance(county_centroid, market_proj)
 # (number of counties) x (number of farmers markets)
 dim(distance_market)
 ```
-# for each of the row in the distance matrix, identify the market that is closest to each of the county and the distance
+for each of the row in the distance matrix, identify the market that is closest to each of the county and the distance
 ```{r}
 nearest_dist <- apply(distance_market, 1, min)
 nearest_idx  <- apply(distance_market, 1, which.min)
 ```
 
-# in the county dataset, for each of the county centroid, identify the name and the distance to the closest farmers market
+in the county dataset, for each of the county centroid, identify the name and the distance to the closest farmers market
 ```{r}
 
 farmersmarket_distance <- county_centroid %>%
@@ -130,7 +126,7 @@ farmersmarket_distance_full <- farmersmarket_distance %>%
 
 ```
 
-# look at the distribution of the farmers market
+ look at the distribution of the farmers market
 ```{r}
 farmersmarket_distance_full %>%
   st_drop_geometry() %>%

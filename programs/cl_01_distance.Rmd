@@ -157,9 +157,9 @@ hub_distance_full <- hub_distance %>%
   left_join(hub_attrs, by = c("nearest_hub_id" = "listing_id")) %>% 
   mutate(hub_desert = (`distance_nearest_hub(mile)` >= 20))
 
-# identify the places that are out of the continental US 
+# identify the places that are out of the continental US
 hub_distance_full <- hub_distance_full %>%
-  filter(STATEFP <= 56) %>% 
+  filter(STATEFP <= 56) %>%
   select(-STATEFP)
 ```
 

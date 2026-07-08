@@ -361,8 +361,8 @@ display: none;
 <h2>Purpose</h2>
 <p>The goal of this code: Identify the distance from the centroid of
 each county to the nearest farmers market in the farmers market
-directory, using county centroid data from
-hub_distance_SPMA_merged.csv.</p>
+directory, using county centroid data from hub_distance_full.csv (the
+output of cl_01_distance).</p>
 <p>Load the library</p>
 <pre class="r"><code>#install.packages(&quot;mapview&quot;)
 
@@ -392,27 +392,23 @@ library(ggplot2)</code></pre>
 <pre class="r"><code>library(readxl)
 library(units)</code></pre>
 <pre><code>## udunits database from C:/Users/joann/AppData/Local/R/win-library/4.5/units/share/udunits/udunits2.xml</code></pre>
-<div id="get-the-county-centroids-from-the-merged-dataset" class="section level3">
-<h3>Get the county centroids from the merged dataset</h3>
-<pre class="r"><code># EPSG:5070 (centroid_x, centroid_y), computed once in cl_01 and passed through
-merged &lt;- read_csv(&quot;../data/outcome/hub_distance_SPMA_merged.csv&quot;)</code></pre>
-<pre><code>## Rows: 3144 Columns: 39
-## ── Column specification ────────────────────────────────────────────────────────
-## Delimiter: &quot;,&quot;
-## chr (11): county_fips, GEOID, state, county_name_hub, nearest_hub_name, hub_...
-## dbl (27): distance_nearest_hub_mile, nearest_hub_id, centroid_x, centroid_y,...
-## lgl  (1): hub_desert
-## 
-## ℹ Use `spec()` to retrieve the full column specification for this data.
-## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
-<pre class="r"><code>county_centroid &lt;- merged %&gt;%
-  transmute(GEOID       = sprintf(&quot;%05d&quot;, as.integer(county_fips)),
-            state       = state,
-            county_name = county_name_hub,
-            centroid_x, centroid_y) %&gt;%
-  st_as_sf(coords = c(&quot;centroid_x&quot;, &quot;centroid_y&quot;), crs = 5070)   
+<div id="get-the-county-centroids-from-cl_01_distances-output" class="section level3">
+<h3>Get the county centroids from cl_01_distance’s output</h3>
+<pre class="r"><code>names_hub &lt;- c(&quot;rowidx&quot;, &quot;GEOID&quot;, &quot;state&quot;, &quot;county_name&quot;, &quot;distance_nearest_hub_mile&quot;,
+               &quot;nearest_hub_name&quot;, &quot;nearest_hub_id&quot;, &quot;hub_county_geoid&quot;, &quot;hub_county_name&quot;,
+               &quot;hub_products&quot;, &quot;hub_desert&quot;, &quot;centroid_x&quot;, &quot;centroid_y&quot;)
 
-# 5070 = NAD83 Albers, in metres</code></pre>
+county_centroid &lt;- read_csv(&quot;../data/outcome/hub_distance_full.csv&quot;,
+                            skip = 1, col_names = names_hub,
+                            col_types = cols(.default = col_character())) %&gt;%
+  transmute(GEOID       = sprintf(&quot;%05d&quot;, as.integer(GEOID)),
+            state, county_name,
+            centroid_x  = as.numeric(gsub(&quot;[^0-9.eE+-]&quot;, &quot;&quot;, centroid_x)),
+            centroid_y  = as.numeric(gsub(&quot;[^0-9.eE+-]&quot;, &quot;&quot;, centroid_y))) %&gt;%
+  # drop Alaska &amp; Hawaii: they sit far outside EPSG:5070 (CONUS Albers), so distances
+  # computed for them in 5070 are distorted (e.g. an inflated ~1000-mile Aleutians value).
+  filter(!state %in% c(&quot;Alaska&quot;, &quot;Hawaii&quot;)) %&gt;%
+  st_as_sf(coords = c(&quot;centroid_x&quot;, &quot;centroid_y&quot;), crs = 5070)   # 5070 = NAD83 Albers, in metres</code></pre>
 </div>
 <div id="load-farmers-market-data" class="section level3">
 <h3>Load farmer’s market data</h3>
@@ -420,11 +416,7 @@ merged &lt;- read_csv(&quot;../data/outcome/hub_distance_SPMA_merged.csv&quot;)<
 distance from the county centroid to each of the farmers market</p>
 <p>note: if a farmers market does not exist in this county, we will map
 the distance to the closest farmers market around</p>
-<pre class="r"><code># col_types = &quot;text&quot; tells readxl NOT to guess column types (the directory has a
-# column whose type is ambiguous, e.g. mostly blank/logical but &quot;1&quot; further down),
-# which otherwise floods the console with &quot;Expecting logical ...&quot; warnings.
-# We only keep 4 columns anyway and convert lon/lat to numeric below.
-market_raw &lt;- read_excel(&quot;../data/source/farmersmarket_2026-623143939.xlsx&quot;,
+<pre class="r"><code>market_raw &lt;- read_excel(&quot;../data/source/farmersmarket_2026-623143939.xlsx&quot;,
                          col_types = &quot;text&quot;)
 
 market_directory &lt;- market_raw %&gt;%
@@ -442,9 +434,6 @@ market_directory &lt;- market_raw %&gt;%
 in</p>
 <pre class="r"><code>markets_sf &lt;- st_as_sf(market_directory, coords = c(&quot;lon&quot;, &quot;lat&quot;), crs = 4326)
 
-# county polygons -&gt; which county does each market fall in (used for market_county_* below)
-# progress_bar = FALSE stops tigris from printing its download progress bar, which
-# knitr would otherwise turn into hundreds of &quot;====&quot; lines in the report.
 options(tigris_use_cache = TRUE)   # cache the download so it is not re-fetched every run
 us_counties   &lt;- counties(cb = TRUE, year = 2023, progress_bar = FALSE)
 county_lookup &lt;- us_counties %&gt;%
@@ -463,18 +452,13 @@ st_crs(market_proj) == st_crs(county_centroid)</code></pre>
 
 # (number of counties) x (number of farmers markets)
 dim(distance_market)</code></pre>
-<pre><code>## [1] 3144 7117</code></pre>
-</div>
-</div>
-<div id="for-each-of-the-row-in-the-distance-matrix-identify-the-market-that-is-closest-to-each-of-the-county-and-the-distance" class="section level1">
-<h1>for each of the row in the distance matrix, identify the market that
-is closest to each of the county and the distance</h1>
+<pre><code>## [1] 3109 7117</code></pre>
+<p>for each of the row in the distance matrix, identify the market that
+is closest to each of the county and the distance</p>
 <pre class="r"><code>nearest_dist &lt;- apply(distance_market, 1, min)
 nearest_idx  &lt;- apply(distance_market, 1, which.min)</code></pre>
-</div>
-<div id="in-the-county-dataset-for-each-of-the-county-centroid-identify-the-name-and-the-distance-to-the-closest-farmers-market" class="section level1">
-<h1>in the county dataset, for each of the county centroid, identify the
-name and the distance to the closest farmers market</h1>
+<p>in the county dataset, for each of the county centroid, identify the
+name and the distance to the closest farmers market</p>
 <pre class="r"><code>farmersmarket_distance &lt;- county_centroid %&gt;%
   select(GEOID, state, county_name) %&gt;%
   mutate(
@@ -492,9 +476,7 @@ nearest market sits in)</p>
 farmersmarket_distance_full &lt;- farmersmarket_distance %&gt;%
   left_join(market_attrs, by = c(&quot;nearest_farmersmarket_id&quot; = &quot;listing_id&quot;)) %&gt;%
   mutate(farmersmarket_desert = (`distance_nearest_farmersmarket(mile)` &gt;= 20))</code></pre>
-</div>
-<div id="look-at-the-distribution-of-the-farmers-market" class="section level1">
-<h1>look at the distribution of the farmers market</h1>
+<p>look at the distribution of the farmers market</p>
 <pre class="r"><code>farmersmarket_distance_full %&gt;%
   st_drop_geometry() %&gt;%
   group_by(state) %&gt;%
@@ -506,20 +488,21 @@ farmersmarket_distance_full &lt;- farmersmarket_distance %&gt;%
     max_mi     = max(`distance_nearest_farmersmarket(mile)`)
   ) %&gt;%
   arrange(desc(mean_mi))</code></pre>
-<pre><code>## # A tibble: 51 × 6
+<pre><code>## # A tibble: 49 × 6
 ##    state        n_counties mean_mi median_mi  min_mi max_mi
 ##    &lt;chr&gt;             &lt;int&gt;   &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;  &lt;dbl&gt;
-##  1 Alaska               30   172.       63.2 7.45    1000. 
-##  2 Nevada               17    52.1      50.9 1.36     115. 
-##  3 Utah                 29    37.1      34.8 1.26      96.2
-##  4 Montana              56    36.3      32.0 4.24      92.7
-##  5 Texas               254    34.8      29.5 0.00323  167. 
-##  6 South Dakota         66    33.0      30.9 1.36      95.8
-##  7 North Dakota         53    30.8      29.3 4.57      64.9
-##  8 New Mexico           33    29.9      26.3 2.05      79.8
-##  9 Arizona              15    28.4      32.9 4.55      55.4
-## 10 Oregon               36    24.6      17.7 1.57     113. 
-## # ℹ 41 more rows</code></pre>
+##  1 Nevada               17    52.1      50.9 1.36     115. 
+##  2 Utah                 29    37.1      34.8 1.26      96.2
+##  3 Montana              56    36.3      32.0 4.24      92.7
+##  4 Texas               254    34.8      29.5 0.00323  167. 
+##  5 South Dakota         66    33.0      30.9 1.36      95.8
+##  6 North Dakota         53    30.8      29.3 4.57      64.9
+##  7 New Mexico           33    29.9      26.3 2.05      79.8
+##  8 Arizona              15    28.4      32.9 4.55      55.4
+##  9 Oregon               36    24.6      17.7 1.57     113. 
+## 10 Nebraska             93    23.6      21.6 0.536     82.3
+## # ℹ 39 more rows</code></pre>
+</div>
 <div id="save-the-dataset" class="section level3">
 <h3>save the dataset</h3>
 <pre class="r"><code>write.csv(farmersmarket_distance_full, &quot;../data/outcome/farmersmarket_distance_full.csv&quot;)</code></pre>
