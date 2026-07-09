@@ -1,0 +1,93 @@
+---
+title: "cl_01_fame"
+author: "Pragati Dahal"
+date: "2026-07-07"
+output: html_document
+---
+
+## Purpose
+The goal of this code here is to do separate the variables needed from the index
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Load the library
+```{r}
+library(tidyverse)
+```
+
+## Load the data
+```{r}
+fame <- read_csv("/Users/pragatidahal/03_DataVIz/2026-Data-Viz-Challenge-main/data/source/FAME_MasterData_Feb2026.csv")
+```
+
+# variables we need for the SPMA index + moderators
+```{r}
+spma_vars <- c(
+  "all_farms",
+  "all_sales",
+  "annual_avg_estabs_count_naics_4244_grocery_and_related_product_wholesalers",
+  "annual_avg_estabs_count_naics_4245_farm_product_raw_material_merch._whls.",
+  "annual_avg_estabs_count_naics_44511_supermarkets_and_other_grocery_stores",
+  "annual_avg_estabs_count_naics_4451_grocery_stores",
+  "d2c_sales_pct",
+  "intermediated_sales_pct",
+  "local_sales_pct",
+  "number_colleges_universities",
+  "number_csa",
+  "number_farmersmarket",
+  "number_foodhub",
+  "number_healthcare_facilities",
+  "number_k12_schools",
+  "number_onfarmmarket",
+  "overall_food_insecurity_rate",
+  "pct_households_with_no_vehicle",
+  "pct_laccess_lowi",
+  "total_acres_operated",
+  "valueadded_farms_pct"
+)
+```
+
+quick check none of these got typo'd before we go further
+```{r}
+setdiff(spma_vars, unique(fame$variable_name))
+```
+
+```{r}
+id_cols <- c("fips", "ansicode", "county_name", "state_name", "state_abbrev")
+```
+
+these variables come from different years in FAME (2019-2025, not one clean
+panel year), so instead of hardcoding a year we just grab the latest year
+available for each variable individually
+```{r}
+fame_latest <- fame %>%
+  filter(variable_name %in% spma_vars) %>%
+  group_by(fips, variable_name) %>%
+  slice_max(year, n = 1) %>%
+  ungroup()
+```
+
+keeping a lookup of which year each variable actually came from, want this
+for the methods writeup later
+```{r}
+var_year_lookup <- fame_latest %>%
+  distinct(variable_name, year) %>%
+  arrange(variable_name)
+
+var_year_lookup
+```
+
+```{r}
+spma_index <- fame_latest %>%
+  select(all_of(id_cols), variable_name, value) %>%
+  pivot_wider(names_from = variable_name, values_from = value) %>%
+  select(all_of(id_cols), all_of(spma_vars))
+```
+
+## Save output
+```{r}
+write_csv(spma_index, "/Users/pragatidahal/03_DataVIz/2026-Data-Viz-Challenge-main/data/outcome/fame_variables.csv")
+write_csv(var_year_lookup, "/Users/pragatidahal/03_DataVIz/2026-Data-Viz-Challenge-main/data/fame_variable_year_reference.csv")
+```
