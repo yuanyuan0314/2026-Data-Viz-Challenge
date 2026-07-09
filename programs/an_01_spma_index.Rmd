@@ -1,7 +1,7 @@
 ---
 title: "cl_03_spma_index"
-author: "Yuanyuan Wen"
-date: "2026-07-08"
+author: "Yuanyuan Wen, Pragati Dahal"
+date: "2026-07-09"
 output: html_document
 ---
 ## Purpose

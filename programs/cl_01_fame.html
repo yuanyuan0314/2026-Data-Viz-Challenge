@@ -395,7 +395,9 @@ from the index</p>
   &quot;annual_avg_estabs_count_naics_4245_farm_product_raw_material_merch._whls.&quot;,
   &quot;annual_avg_estabs_count_naics_44511_supermarkets_and_other_grocery_stores&quot;,
   &quot;annual_avg_estabs_count_naics_4451_grocery_stores&quot;,
+  &quot;d2c_farms_pct&quot;,
   &quot;d2c_sales_pct&quot;,
+  &quot;intermediated_farms_pct&quot;,
   &quot;intermediated_sales_pct&quot;,
   &quot;local_sales_pct&quot;,
   &quot;number_colleges_universities&quot;,
@@ -430,7 +432,7 @@ this for the methods writeup later</p>
   arrange(variable_name)
 
 var_year_lookup</code></pre>
-<pre><code>## # A tibble: 21 × 2
+<pre><code>## # A tibble: 23 × 2
 ##    variable_name                                                            year
 ##    &lt;chr&gt;                                                                   &lt;dbl&gt;
 ##  1 all_farms                                                                2022
@@ -439,11 +441,11 @@ var_year_lookup</code></pre>
 ##  4 annual_avg_estabs_count_naics_4245_farm_product_raw_material_merch._wh…  2024
 ##  5 annual_avg_estabs_count_naics_44511_supermarkets_and_other_grocery_sto…  2024
 ##  6 annual_avg_estabs_count_naics_4451_grocery_stores                        2024
-##  7 d2c_sales_pct                                                            2022
-##  8 intermediated_sales_pct                                                  2022
-##  9 local_sales_pct                                                          2022
-## 10 number_colleges_universities                                             2025
-## # ℹ 11 more rows</code></pre>
+##  7 d2c_farms_pct                                                            2022
+##  8 d2c_sales_pct                                                            2022
+##  9 intermediated_farms_pct                                                  2022
+## 10 intermediated_sales_pct                                                  2022
+## # ℹ 13 more rows</code></pre>
 <pre class="r"><code>spma_index &lt;- fame_latest %&gt;%
   select(all_of(id_cols), variable_name, value) %&gt;%
   pivot_wider(names_from = variable_name, values_from = value) %&gt;%
