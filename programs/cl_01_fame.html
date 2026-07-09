@@ -376,7 +376,7 @@ from the index</p>
 </div>
 <div id="load-the-data" class="section level2">
 <h2>Load the data</h2>
-<pre class="r"><code>fame &lt;- read_csv(&quot;/Users/pragatidahal/03_DataVIz/2026-Data-Viz-Challenge-main/data/source/FAME_MasterData_Feb2026.csv&quot;)</code></pre>
+<pre class="r"><code>fame &lt;- read_csv(&quot;../data/source/FAME_MasterData_Feb2026.csv&quot;)</code></pre>
 <pre><code>## Rows: 441102 Columns: 8
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
@@ -450,8 +450,7 @@ var_year_lookup</code></pre>
   select(all_of(id_cols), all_of(spma_vars))</code></pre>
 <div id="save-output" class="section level2">
 <h2>Save output</h2>
-<pre class="r"><code>write_csv(spma_index, &quot;/Users/pragatidahal/03_DataVIz/2026-Data-Viz-Challenge-main/data/outcome/fame_variables.csv&quot;)
-write_csv(var_year_lookup, &quot;/Users/pragatidahal/03_DataVIz/2026-Data-Viz-Challenge-main/data/fame_variable_year_reference.csv&quot;)</code></pre>
+<pre class="r"><code>write_csv(spma_index, &quot;../data/outcome/fame_variables.csv&quot;)</code></pre>
 </div>
 </div>
 

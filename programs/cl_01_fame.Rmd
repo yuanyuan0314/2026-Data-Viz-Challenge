@@ -19,7 +19,7 @@ library(tidyverse)
 
 ## Load the data
 ```{r}
-fame <- read_csv("/Users/pragatidahal/03_DataVIz/2026-Data-Viz-Challenge-main/data/source/FAME_MasterData_Feb2026.csv")
+fame <- read_csv("../data/source/FAME_MasterData_Feb2026.csv")
 ```
 
 # variables we need for the SPMA index + moderators
@@ -88,6 +88,5 @@ spma_index <- fame_latest %>%
 
 ## Save output
 ```{r}
-write_csv(spma_index, "/Users/pragatidahal/03_DataVIz/2026-Data-Viz-Challenge-main/data/outcome/fame_variables.csv")
-write_csv(var_year_lookup, "/Users/pragatidahal/03_DataVIz/2026-Data-Viz-Challenge-main/data/fame_variable_year_reference.csv")
+write_csv(spma_index, "../data/outcome/fame_variables.csv")
 ```
