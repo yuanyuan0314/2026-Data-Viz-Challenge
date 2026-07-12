@@ -1,0 +1,94 @@
+---
+title: "fig_02"
+author: "Xiaoyi Zhao"
+date: "2026-07-12"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Purpose 
+1. the purpose of this file is to geneat the county comparison plot 
+2. the county comparison plot will compare the differnce in similar spma but different 
+ composition 
+
+
+load the library 
+```{r}
+library(tigris)    # downloads Census TIGER shapefiles (county boundaries)
+library(sf)        # the workhorse: stores and manipulates spatial data
+library(dplyr)     # regular data wrangling once things look like data frames
+
+library(ggplot2)
+library(mapview)
+library(readxl)
+library(readr)
+library(units)
+
+#to make the spider plot
+library(scales)
+
+devtools::install_github("ricardo-bion/ggradar")
+library(ggradar)
+```
+
+step 1 : load the dataset 
+```{r}
+merged_final <- read_csv("../data/outcome/merged_final_xz.csv") %>% 
+  select(county_name_hub, county_fips, spma, direct_to_consumer, foodhub_inter, distance_nearest_hub_mile, all_sales, distance_nearest_farmersmarket_mile, all_sales) %>% arrange(spma)
+```
+After, identifying, Brazos, Texas(48041), and Kandiyohi, Michigan (27067) , Michigan, both have relatively high spma, but Kandiyohi's direct to consumer index is much lower than that of Dane, but the advantage of Willamson is that the distance to the nearest foodhub is much smaller than that of Dane 
+
+Step 2, make the visualization 
+```{r, fig.width = 12, fig.height = 5}
+merged_final %>%
+  filter(county_fips %in%  c("48041", "27067"))
+
+ #rescale the component so it can be interpret as the location between national max and national min
+fig_2 <- merged_final %>%
+  filter(county_fips %in%  c("48041", "27067")) %>%
+  mutate(
+    direct_to_consumer        = rescale(direct_to_consumer),
+    d2c = rescale(-distance_nearest_farmersmarket_mile),
+    foodhub_inter             = rescale(foodhub_inter),
+    hub_proximity             = rescale(-distance_nearest_hub_mile),
+    all_sales = rescale(all_sales)
+  ) %>%
+  select(group          = county_name_hub,
+         `Direct To Consumer` = direct_to_consumer,
+         `Hub Access`    = foodhub_inter,
+         `Hub Distance`= hub_proximity,
+         `Direct to Consumer Distance` = d2c,
+         `All Sales` = all_sales) %>%
+  mutate(group = recode(group,
+                        "Brazos"  = "Brazos County, Texas",
+                        "Kandiyohi" = "Kandiyohi County, Michigan")) %>%
+  ggradar(font.radar = "roboto",
+          values.radar   = c("0", "50", "100"),
+          group.colours  = c("#861F41", "#E5751F"),
+          grid.label.size = 5,
+          axis.label.size = 4)+
+  labs(title = "How Foodhub Support Counties?",
+       caption = "Brazo's SPMA is 21792445, and Kandiyohi's SPMA is 80396688") +
+  theme_void() +
+  theme(
+    plot.title      = element_text(face = "bold", size = 14, hjust = 0),
+    plot.subtitle   = element_text(size = 11, color = "grey30",
+                                   margin = margin(b = 10)),
+    plot.caption    = element_text(size = 8, color = "grey40", hjust = 0),
+    legend.position = "bottom",
+    legend.title    = element_text(size = 9),
+    legend.text     = element_text(size = 8),
+    plot.margin     = margin(20, 120, 20, 120)
+  ) + coord_equal(clip = "off")
+
+```
+
+```{r}
+ggsave("../figures/fig_02_xz.pdf", plot = fig_2, width = 12, height = 5)
+
+fig_2
+```
+
