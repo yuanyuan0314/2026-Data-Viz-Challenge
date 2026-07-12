@@ -1,7 +1,7 @@
 ---
 title: "cl_03_spma_index"
-author: "Yuanyuan Wen"
-date: "2026-07-08"
+author: "Yuanyuan Wen, Pragati Dahal"
+date: "2026-07-09"
 output: html_document
 ---
 ## Purpose
@@ -77,17 +77,19 @@ if (!"all_sales" %in% names(dat)) {
 ```{r}
 spma_index <- dat %>%
   mutate(
-    has_hub  = !is.na(number_foodhub) & number_foodhub > 0,
+    has_hub = !is.na(number_foodhub) & number_foodhub > 0,
 
-    dtc_sales          = all_sales * d2c_sales_pct,
-    local_interm_sales = all_sales * (local_sales_pct - d2c_sales_pct),
-    interm_sales       = all_sales * intermediated_sales_pct,
+    dtc_farms    = all_farms * d2c_farms_pct / 100,
+    interm_farms = all_farms * intermediated_farms_pct / 100,
 
-    # second term's numerator depends on whether the county has a hub
-    term2_numer = if_else(has_hub, local_interm_sales, interm_sales),
+    term1 = dtc_farms    / (distance_nearest_farmersmarket_mile^2),
+    term2 = interm_farms / (distance_nearest_hub_mile^2),
 
-    SPMA = dtc_sales / (distance_nearest_farmersmarket_mile^2) +
-           term2_numer / (distance_nearest_hub_mile^2)
+    # a county contributes whatever channels it has data for
+    SPMA = case_when(
+      is.na(term1) & is.na(term2) ~ NA_real_,           # nothing observed → NA
+      TRUE ~ coalesce(term1, 0) + coalesce(term2, 0)    # sum what exists
+    )
   )
 
 # quick look

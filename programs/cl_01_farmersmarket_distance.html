@@ -367,14 +367,11 @@ output of cl_01_distance).</p>
 <pre class="r"><code>#install.packages(&quot;mapview&quot;)
 
 library(tigris)    # county polygons (only used below to locate each market&#39;s county)</code></pre>
-<pre><code>## Warning: package &#39;tigris&#39; was built under R version 4.5.3</code></pre>
 <pre><code>## To enable caching of data, set `options(tigris_use_cache = TRUE)`
 ## in your R script or .Rprofile.</code></pre>
 <pre class="r"><code>library(sf)        # the workhorse: stores and manipulates spatial data</code></pre>
-<pre><code>## Warning: package &#39;sf&#39; was built under R version 4.5.3</code></pre>
-<pre><code>## Linking to GEOS 3.14.1, GDAL 3.12.1, PROJ 9.7.1; sf_use_s2() is TRUE</code></pre>
+<pre><code>## Linking to GEOS 3.13.0, GDAL 3.8.5, PROJ 9.5.1; sf_use_s2() is TRUE</code></pre>
 <pre class="r"><code>library(dplyr)     # regular data wrangling once things look like data frames</code></pre>
-<pre><code>## Warning: package &#39;dplyr&#39; was built under R version 4.5.3</code></pre>
 <pre><code>## 
 ## Attaching package: &#39;dplyr&#39;</code></pre>
 <pre><code>## The following objects are masked from &#39;package:stats&#39;:
@@ -385,13 +382,11 @@ library(tigris)    # county polygons (only used below to locate each market&#39;
 ##     intersect, setdiff, setequal, union</code></pre>
 <pre class="r"><code>library(readr)     # read the merged csv that carries the county centroids
 
-library(ggplot2)</code></pre>
-<pre><code>## Warning: package &#39;ggplot2&#39; was built under R version 4.5.3</code></pre>
-<pre class="r"><code>library(mapview)</code></pre>
-<pre><code>## Warning: package &#39;mapview&#39; was built under R version 4.5.3</code></pre>
-<pre class="r"><code>library(readxl)
+library(ggplot2)
+library(mapview)
+library(readxl)
 library(units)</code></pre>
-<pre><code>## udunits database from C:/Users/joann/AppData/Local/R/win-library/4.5/units/share/udunits/udunits2.xml</code></pre>
+<pre><code>## udunits database from /Library/Frameworks/R.framework/Versions/4.6/Resources/library/units/share/udunits/udunits2.xml</code></pre>
 <div id="get-the-county-centroids-from-cl_01_distances-output" class="section level3">
 <h3>Get the county centroids from cl_01_distance’s output</h3>
 <pre class="r"><code>names_hub &lt;- c(&quot;rowidx&quot;, &quot;GEOID&quot;, &quot;state&quot;, &quot;county_name&quot;, &quot;distance_nearest_hub_mile&quot;,

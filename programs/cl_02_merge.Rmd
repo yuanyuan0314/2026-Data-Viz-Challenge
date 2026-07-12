@@ -52,7 +52,7 @@ hub_distance <- hub_raw %>%
 Read SPMA_index_variables.csv (filtered from FAME 2.0). fips is stored as a numeric, so states with FIPS codes below 10 lose their leading zero (e.g., `1001` instead of `01001`). We read it as a character and pad to a 5-digit key.
 
 ```{r}
-spma <- read_csv("../data/source/SPMA_index_variables.csv",
+spma <- read_csv("../data/outcome/fame_variables.csv",
                  col_types = cols(fips = col_character())) %>%
   mutate(county_fips = sprintf("%05d", as.integer(fips)))
 
