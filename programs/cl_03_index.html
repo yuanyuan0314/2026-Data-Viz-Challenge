@@ -387,15 +387,16 @@ are outside of the direct to consumer to be the intermediate</p>
 <p>step 1 : load the dataset merged in the previous step</p>
 <pre class="r"><code>merged &lt;- read_csv(&quot;../data/outcome/distance_SPMA_merged.csv&quot;)%&gt;%
   mutate(county_fips = sprintf(&quot;%05d&quot;, as.integer(county_fips)))</code></pre>
-<pre><code>## Rows: 3144 Columns: 47
-## ── Column specification ────────────────────────────────────────────────────────
-## Delimiter: &quot;,&quot;
-## chr (14): county_fips, GEOID, state, county_name_hub, nearest_hub_name, hub_...
-## dbl (31): distance_nearest_hub_mile, nearest_hub_id, centroid_x, centroid_y,...
-## lgl  (2): hub_desert, farmersmarket_desert
-## 
-## ℹ Use `spec()` to retrieve the full column specification for this data.
-## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre><code>## New names:
+## Rows: 3144 Columns: 53
+## ── Column specification
+## ──────────────────────────────────────────────────────── Delimiter: &quot;,&quot; chr
+## (16): county_fips, GEOID, state, county_name_hub, nearest_hub_name, hub_... dbl
+## (35): distance_nearest_hub_mile, nearest_hub_id, centroid_x, centroid_y,... lgl
+## (2): hub_desert, farmersmarket_desert
+## ℹ Use `spec()` to retrieve the full column specification for this data. ℹ
+## Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## • `...1` -&gt; `...48`</code></pre>
 <p>step 2: build the index for the direct to consumer sale</p>
 <p>we use the squared distance to the neared farmer’s market as the
 weight when we evaluate the travel cost to the nearest farmer’s
@@ -410,7 +411,9 @@ succeed 1, then we assume that there is no foodhub intermedated sale.
 Otherwise, due to the data limitation, we set the rest of the share to
 be the foodhub sale</p>
 <pre class="r"><code>merged_i &lt;- merged_i %&gt;% 
-  mutate(foodhub_inter = if_else(d2c_sales_pct &gt;= 1,
+  mutate(foodhub_share = if_else(d2c_sales_pct &gt;= 1,
+                                0, (1 - d2c_sales_pct)),
+         foodhub_inter = if_else(d2c_sales_pct &gt;= 1,
                                 0, 
                                 (all_sales * (1-d2c_sales_pct))/(distance_nearest_hub_mile^2)))</code></pre>
 <p>step 3 : add two index together</p>

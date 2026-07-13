@@ -51,7 +51,9 @@ step 3: build the index for the intermediate sale from the foodhub
 Note: in here, we do set an assumption that if the sales from the d2c succeed 1, then we assume that there is no foodhub intermedated sale. Otherwise, due to the data limitation, we set the rest of the share to be the foodhub sale
 ```{r}
 merged_i <- merged_i %>% 
-  mutate(foodhub_inter = if_else(d2c_sales_pct >= 1,
+  mutate(foodhub_share = if_else(d2c_sales_pct >= 1,
+                                0, (1 - d2c_sales_pct)),
+         foodhub_inter = if_else(d2c_sales_pct >= 1,
                                 0, 
                                 (all_sales * (1-d2c_sales_pct))/(distance_nearest_hub_mile^2)))
 ```
