@@ -44,7 +44,7 @@ state_lookup <- fips_codes %>%
 
 
 merged_final <- read_csv("../data/outcome/merged_final_xz.csv") %>% 
-  select(county_name_hub, county_fips, spma, direct_to_consumer, foodhub_inter, distance_nearest_hub_mile, all_sales, distance_nearest_farmersmarket_mile, all_sales,share) %>% 
+  select(county_name_hub, county_fips, spma, direct_to_consumer, foodhub_inter, distance_nearest_hub_mile, all_sales, distance_nearest_farmersmarket_mile, all_sales, d2c_sales_pct, foodhub_share, share) %>% 
   rename(fruit_nut_share = share) %>% 
   arrange(fruit_nut_share) %>% 
   filter(county_fips != "22087",
@@ -66,21 +66,20 @@ After, identifying, Brazos, Texas(48041), and Kandiyohi, Michigan (27067) , Mich
 
 fig_2_Okanogan_Yakima <- merged_final %>%
   mutate(
-    direct_to_consumer        = percent_rank(direct_to_consumer),
+    direct_to_consumer_share        = percent_rank(d2c_sales_pct),
     d2c = percent_rank(-distance_nearest_farmersmarket_mile),
     foodhub_inter             = percent_rank(foodhub_inter),
     hub_proximity             = percent_rank(-distance_nearest_hub_mile),
-    all_sales = percent_rank(all_sales),
+    foodhub_share = percent_rank(foodhub_share),
     spma = percent_rank(spma),
     fruit_nut_share = percent_rank(fruit_nut_share)
   ) %>%
   filter(county_fips %in%  c("53047", "53077")) %>%
   select(group = county_name_hub,
-         `Direct To Consumer` = direct_to_consumer,
-         `Hub Access`    = foodhub_inter,
-         `Hub Distance`= hub_proximity,
-         `Direct to Consumer Distance` = d2c,
-         `All Sales` = all_sales,
+         `Direct To Consumer Share` = direct_to_consumer_share,
+         `Close to Foodhub`= hub_proximity,
+         `Close to Farmer's Market` = d2c,
+         `Foodhub Intermediated Share` = foodhub_share,
          `SPMA` = spma,
          `Fruit Nut Share` = fruit_nut_share) %>%
   ggradar(font.radar = "sans",
@@ -101,7 +100,8 @@ fig_2_Okanogan_Yakima <- merged_final %>%
     plot.margin     = margin(20, 120, 20, 120)
   ) + coord_equal(clip = "off")
 
-fig_2_pair_01
+ggsave("../figures/fig_2_Okanogan_Yakima.pdf", plot = fig_2_Okanogan_Yakima, width = 12, height = 5)
+
 ```
 
 
@@ -115,21 +115,20 @@ merged_final %>%
 
 fig_2_Ventura_Yakima <- merged_final %>%
   mutate(
-    direct_to_consumer        = percent_rank(direct_to_consumer),
+    direct_to_consumer_share        = percent_rank(d2c_sales_pct),
     d2c = percent_rank(-distance_nearest_farmersmarket_mile),
     foodhub_inter             = percent_rank(foodhub_inter),
     hub_proximity             = percent_rank(-distance_nearest_hub_mile),
-    all_sales = percent_rank(all_sales),
+    foodhub_share = percent_rank(foodhub_share),
     spma = percent_rank(spma),
     fruit_nut_share = percent_rank(fruit_nut_share)
   ) %>%
   filter(county_fips %in%  c("06111", "53077")) %>%
   select(group = county_name_hub,
-         `Direct To Consumer` = direct_to_consumer,
-         `Hub Access`    = foodhub_inter,
-         `Hub Distance`= hub_proximity,
-         `Direct to Consumer Distance` = d2c,
-         `All Sales` = all_sales,
+         `Direct To Consumer Share` = direct_to_consumer_share,
+         `Close to Foodhub`= hub_proximity,
+         `Close to Farmer's Market` = d2c,
+         `Foodhub Intermediated Share` = foodhub_share,
          `SPMA` = spma,
          `Fruit Nut Share` = fruit_nut_share) %>%
   mutate(group = recode(group,
@@ -153,13 +152,10 @@ fig_2_Ventura_Yakima <- merged_final %>%
     plot.margin     = margin(20, 120, 20, 120)
   ) + coord_equal(clip = "off")
 
-```
-
-```{r}
 ggsave("../figures/fig_2_Ventura_Yakima.pdf", plot = fig_2_Ventura_Yakima, width = 12, height = 5)
 
-fig_2_pair_02
 ```
+
 
 **Monterey, CA v.s. Kern ,CA**
 
@@ -167,21 +163,20 @@ fig_2_pair_02
 
 fig_2_Monterey_Kern <- merged_final %>%
   mutate(
-    direct_to_consumer        = percent_rank(direct_to_consumer),
+    direct_to_consumer_share        = percent_rank(d2c_sales_pct),
     d2c = percent_rank(-distance_nearest_farmersmarket_mile),
     foodhub_inter             = percent_rank(foodhub_inter),
     hub_proximity             = percent_rank(-distance_nearest_hub_mile),
-    all_sales = percent_rank(all_sales),
+    foodhub_share = percent_rank(foodhub_share),
     spma = percent_rank(spma),
     fruit_nut_share = percent_rank(fruit_nut_share)
   ) %>%
   filter(county_fips %in%  c("06053", "06029")) %>%
   select(group = county_name_hub,
-         `Direct To Consumer` = direct_to_consumer,
-         `Hub Access`    = foodhub_inter,
-         `Hub Distance`= hub_proximity,
-         `Direct to Consumer Distance` = d2c,
-         `All Sales` = all_sales,
+         `Direct To Consumer Share` = direct_to_consumer_share,
+         `Close to Foodhub`= hub_proximity,
+         `Close to Farmer's Market` = d2c,
+         `Foodhub Intermediated Share` = foodhub_share,
          `SPMA` = spma,
          `Fruit Nut Share` = fruit_nut_share) %>%
   ggradar(font.radar = "sans",
@@ -203,30 +198,31 @@ fig_2_Monterey_Kern <- merged_final %>%
   ) + coord_equal(clip = "off")
 
 fig_2_Monterey_Kern
+
+ggsave("../figures/fig_2_Monterey_Kern.pdf", plot = fig_2_Monterey_Kern, width = 12, height = 5)
 ```
 
 
-**Guadalupe, TX vs Guthrie, TN**
+**Washington, Akansas v.s. Benton, Arkansas **
 
 ```{r}
 
-fig_2_Guadalupe_Guthrie <- merged_final %>%
+fig_2_Washington_Benton <- merged_final %>%
   mutate(
-    direct_to_consumer        = percent_rank(direct_to_consumer),
+    direct_to_consumer_share        = percent_rank(d2c_sales_pct),
     d2c = percent_rank(-distance_nearest_farmersmarket_mile),
     foodhub_inter             = percent_rank(foodhub_inter),
     hub_proximity             = percent_rank(-distance_nearest_hub_mile),
-    all_sales = percent_rank(all_sales),
+    foodhub_share = percent_rank(foodhub_share),
     spma = percent_rank(spma),
     fruit_nut_share = percent_rank(fruit_nut_share)
   ) %>%
-  filter(county_fips %in%  c("48187", "19077")) %>%
+  filter(county_fips %in%  c("05007", "05145")) %>%
   select(group = county_name_hub,
-         `Direct To Consumer` = direct_to_consumer,
-         `Hub Access`    = foodhub_inter,
-         `Hub Distance`= hub_proximity,
-         `Direct to Consumer Distance` = d2c,
-         `All Sales` = all_sales,
+         `Direct To Consumer Share` = direct_to_consumer_share,
+         `Close to Foodhub`= hub_proximity,
+         `Close to Farmer's Market` = d2c,
+         `Foodhub Intermediated Share` = foodhub_share,
          `SPMA` = spma,
          `Fruit Nut Share` = fruit_nut_share) %>%
   mutate(group = recode(group,
@@ -250,32 +246,29 @@ fig_2_Guadalupe_Guthrie <- merged_final %>%
     plot.margin     = margin(20, 120, 20, 120)
   ) + coord_equal(clip = "off")
 
-fig_2_Guadalupe_Guthrie
+ggsave("../figures/fig_2_Washington_Benton.pdf", plot = fig_2_Washington_Benton, width = 12, height = 5)
+
 ```
-
-
-Pair 6: Guadalupe, TX vs Cass, MN( Minnisota)
-
+**Guadalupe, TX vs Cass, MN( Minnisota)**
 
 ```{r}
 
 fig_2_Guadalupe_Cass <- merged_final %>%
   mutate(
-    direct_to_consumer        = percent_rank(direct_to_consumer),
+    direct_to_consumer_share        = percent_rank(d2c_sales_pct),
     d2c = percent_rank(-distance_nearest_farmersmarket_mile),
     foodhub_inter             = percent_rank(foodhub_inter),
     hub_proximity             = percent_rank(-distance_nearest_hub_mile),
-    all_sales = percent_rank(all_sales),
+    foodhub_share = percent_rank(foodhub_share),
     spma = percent_rank(spma),
     fruit_nut_share = percent_rank(fruit_nut_share)
   ) %>%
   filter(county_fips %in%  c("48187", "26027")) %>%
   select(group = county_name_hub,
-         `Direct To Consumer` = direct_to_consumer,
-         `Hub Access`    = foodhub_inter,
-         `Hub Distance`= hub_proximity,
-         `Direct to Consumer Distance` = d2c,
-         `All Sales` = all_sales,
+         `Direct To Consumer Share` = direct_to_consumer_share,
+         `Close to Foodhub`= hub_proximity,
+         `Close to Farmer's Market` = d2c,
+         `Foodhub Intermediated Share` = foodhub_share,
          `SPMA` = spma,
          `Fruit Nut Share` = fruit_nut_share) %>%
   mutate(group = recode(group,
@@ -299,29 +292,30 @@ fig_2_Guadalupe_Cass <- merged_final %>%
     plot.margin     = margin(20, 120, 20, 120)
   ) + coord_equal(clip = "off")
 
+ggsave("../figures/fig_2_Guadalupe_Cass.pdf", plot = fig_2_Guadalupe_Cass, width = 12, height = 5)
+
 ```
 
 
-
+**Grawford, GA vs Camden, GA**
 ```{r}
 
 fig_2_Grawford_Camden <- merged_final %>%
   mutate(
-    direct_to_consumer        = percent_rank(direct_to_consumer),
+    direct_to_consumer_share        = percent_rank(d2c_sales_pct),
     d2c = percent_rank(-distance_nearest_farmersmarket_mile),
     foodhub_inter             = percent_rank(foodhub_inter),
     hub_proximity             = percent_rank(-distance_nearest_hub_mile),
-    all_sales = percent_rank(all_sales),
+    foodhub_share = percent_rank(foodhub_share),
     spma = percent_rank(spma),
     fruit_nut_share = percent_rank(fruit_nut_share)
   ) %>%
   filter(county_fips %in%  c("13079", "13039")) %>%
   select(group = county_name_hub,
-         `Direct To Consumer` = direct_to_consumer,
-         `Hub Access`    = foodhub_inter,
-         `Hub Distance`= hub_proximity,
-         `Direct to Consumer Distance` = d2c,
-         `All Sales` = all_sales,
+         `Direct To Consumer Share` = direct_to_consumer_share,
+         `Close to Foodhub`= hub_proximity,
+         `Close to Farmer's Market` = d2c,
+         `Foodhub Intermediated Share` = foodhub_share,
          `SPMA` = spma,
          `Fruit Nut Share` = fruit_nut_share) %>%
   ggradar(font.radar = "sans",
@@ -346,5 +340,140 @@ fig_2_Grawford_Camden <- merged_final %>%
 ```
 ```{r}
 ggsave("../figures/fig_2_Grawford_Camden.pdf", plot = fig_2_Grawford_Camden, width = 12, height = 5)
+
+```
+
+**Franklin, WA vs. Chilton, Alabama**
+
+```{r}
+
+fig_2_Franklin_Chilton <- merged_final %>%
+  mutate(
+    direct_to_consumer_share        = percent_rank(d2c_sales_pct),
+    d2c = percent_rank(-distance_nearest_farmersmarket_mile),
+    foodhub_inter             = percent_rank(foodhub_inter),
+    hub_proximity             = percent_rank(-distance_nearest_hub_mile),
+    foodhub_share = percent_rank(foodhub_share),
+    spma = percent_rank(spma),
+    fruit_nut_share = percent_rank(fruit_nut_share)
+  ) %>%
+  filter(county_fips %in%  c("53021", "01021")) %>%
+  select(group = county_name_hub,
+         `Direct To Consumer Share` = direct_to_consumer_share,
+         `Close to Foodhub`= hub_proximity,
+         `Close to Farmer's Market` = d2c,
+         `Foodhub Intermediated Share` = foodhub_share,
+         `SPMA` = spma,
+         `Fruit Nut Share` = fruit_nut_share) %>%
+  ggradar(font.radar = "sans",
+          values.radar   = c("0", "50", "100"),
+          group.colours  = c("#861F41", "#E5751F"),
+          grid.label.size = 5,
+          axis.label.size = 4)+
+  labs(title = "How Foodhub Support Counties?") +
+  theme_void() +
+  theme(
+    plot.title      = element_text(face = "bold", size = 14, hjust = 0),
+    plot.subtitle   = element_text(size = 11, color = "grey30",
+                                   margin = margin(b = 10)),
+    plot.caption    = element_text(size = 8, color = "grey40", hjust = 0),
+    legend.position = "bottom",
+    legend.title    = element_text(size = 9),
+    legend.text     = element_text(size = 8),
+    plot.margin     = margin(20, 120, 20, 120)
+  ) + coord_equal(clip = "off")
+
+ggsave("../figures/fig_2_Franklin_Chilton.pdf", plot = fig_2_Franklin_Chilton, width = 12, height = 5)
+
+```
+
+**Greenville County, SC  v.s. Buncombe County, NC**
+
+```{r}
+
+fig_2_Greenville_Buncombe <- merged_final %>%
+  mutate(
+    direct_to_consumer_share        = percent_rank(d2c_sales_pct),
+    d2c = percent_rank(-distance_nearest_farmersmarket_mile),
+    foodhub_inter             = percent_rank(foodhub_inter),
+    hub_proximity             = percent_rank(-distance_nearest_hub_mile),
+    foodhub_share = percent_rank(foodhub_share),
+    spma = percent_rank(spma),
+    fruit_nut_share = percent_rank(fruit_nut_share)
+  ) %>%
+  filter(county_fips %in%  c("45045", "37021")) %>%
+  select(group = county_name_hub,
+         `Direct To Consumer Share` = direct_to_consumer_share,
+         `Close to Foodhub`= hub_proximity,
+         `Close to Farmer's Market` = d2c,
+         `Foodhub Intermediated Share` = foodhub_share,
+         `SPMA` = spma,
+         `Fruit Nut Share` = fruit_nut_share) %>%
+  ggradar(font.radar = "sans",
+          values.radar   = c("0", "50", "100"),
+          group.colours  = c("#861F41", "#E5751F"),
+          grid.label.size = 5,
+          axis.label.size = 4)+
+  labs(title = "How Foodhub Support Counties?") +
+  theme_void() +
+  theme(
+    plot.title      = element_text(face = "bold", size = 14, hjust = 0),
+    plot.subtitle   = element_text(size = 11, color = "grey30",
+                                   margin = margin(b = 10)),
+    plot.caption    = element_text(size = 8, color = "grey40", hjust = 0),
+    legend.position = "bottom",
+    legend.title    = element_text(size = 9),
+    legend.text     = element_text(size = 8),
+    plot.margin     = margin(20, 120, 20, 120)
+  ) + coord_equal(clip = "off")
+
+fig_2_Greenville_Buncombe
+ggsave("../figures/fig_2_Greenville_Buncombe.pdf", plot = fig_2_Greenville_Buncombe, width = 12, height = 5)
+
+```
+
+
+**Marion County County, FL  v.s. Okeechobee County, FL**
+
+```{r}
+
+fig_2_Marion_Okeechobee <- merged_final %>%
+  mutate(
+    direct_to_consumer_share        = percent_rank(d2c_sales_pct),
+    d2c = percent_rank(-distance_nearest_farmersmarket_mile),
+    foodhub_inter             = percent_rank(foodhub_inter),
+    hub_proximity             = percent_rank(-distance_nearest_hub_mile),
+    foodhub_share = percent_rank(foodhub_share),
+    spma = percent_rank(spma),
+    fruit_nut_share = percent_rank(fruit_nut_share)
+  ) %>%
+  filter(county_fips %in%  c("12083", "12093")) %>%
+  select(group = county_name_hub,
+         `Direct To Consumer Share` = direct_to_consumer_share,
+         `Close to Foodhub`= hub_proximity,
+         `Close to Farmer's Market` = d2c,
+         `Foodhub Intermediated Share` = foodhub_share,
+         `SPMA` = spma,
+         `Fruit Nut Share` = fruit_nut_share) %>%
+  ggradar(font.radar = "sans",
+          values.radar   = c("0", "50", "100"),
+          group.colours  = c("#861F41", "#E5751F"),
+          grid.label.size = 5,
+          axis.label.size = 4)+
+  labs(title = "How Foodhub Support Counties?") +
+  theme_void() +
+  theme(
+    plot.title      = element_text(face = "bold", size = 14, hjust = 0),
+    plot.subtitle   = element_text(size = 11, color = "grey30",
+                                   margin = margin(b = 10)),
+    plot.caption    = element_text(size = 8, color = "grey40", hjust = 0),
+    legend.position = "bottom",
+    legend.title    = element_text(size = 9),
+    legend.text     = element_text(size = 8),
+    plot.margin     = margin(20, 120, 20, 120)
+  ) + coord_equal(clip = "off")
+
+fig_2_Marion_Okeechobee
+ggsave("../figures/fig_2_Marion_Okeechobee.pdf", plot = fig_2_Marion_Okeechobee, width = 12, height = 5)
 
 ```
