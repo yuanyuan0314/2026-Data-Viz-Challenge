@@ -452,12 +452,8 @@ rather than a negative number.</p>
     has_hub  = !is.na(number_foodhub) &amp; number_foodhub &gt; 0,
 
     dtc_sales          = all_sales * d2c_sales_pct,
-    local_interm_sales = all_sales * (local_sales_pct - d2c_sales_pct),
     interm_sales       = all_sales * (1 - d2c_sales_pct),
-
-    # second term&#39;s numerator depends on whether the county has a hub
-    term2_numer = if_else(has_hub, local_interm_sales, interm_sales),
-
+    
     SPMA = dtc_sales / (distance_nearest_farmersmarket_mile^2) +
            interm_sales  / (distance_nearest_hub_mile^2)
   )
