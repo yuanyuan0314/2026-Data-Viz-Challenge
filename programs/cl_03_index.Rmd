@@ -1,0 +1,71 @@
+---
+title: "cl_03"
+author: "Xiaoyi Zhao"
+date: "2026-07-10"
+output: html_document
+---
+
+## Purpose
+
+The goal of this code here is to build the index for the market accessiblity 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Load the library 
+
+```{r}
+library(tigris)    # downloads Census TIGER shapefiles (county boundaries)
+library(sf)        # the workhorse: stores and manipulates spatial data
+library(dplyr)     # regular data wrangling once things look like data frames
+
+library(ggplot2)
+library(mapview)
+library(readxl)
+library(units)
+library(readr)
+```
+
+build the index 
+Note: for this one, we will treat all the ones that are outside of the direct to consumer to be the intermediate
+
+step 1 : load the dataset merged in the previous step
+```{r}
+merged <- read_csv("../data/outcome/distance_SPMA_merged.csv")%>%
+  mutate(county_fips = sprintf("%05d", as.integer(county_fips)))
+
+```
+step 2: build the index for the direct to consumer sale 
+
+we use the squared distance to the neared farmer's market as the weight when we evaluate the travel cost to the nearest farmer's market
+```{r}
+merged_i <- merged %>% 
+  mutate(direct_to_consumer = (all_sales * d2c_sales_pct)/(distance_nearest_farmersmarket_mile^2)) %>% 
+  filter(!is.na(direct_to_consumer)) # drop the county that have the missing value in the direct to consumer sale
+```
+
+
+step 3: build the index for the intermediate sale from the foodhub 
+
+Note: in here, we do set an assumption that if the sales from the d2c succeed 1, then we assume that there is no foodhub intermedated sale. Otherwise, due to the data limitation, we set the rest of the share to be the foodhub sale
+```{r}
+merged_i <- merged_i %>% 
+  mutate(foodhub_inter = if_else(d2c_sales_pct >= 1,
+                                0, 
+                                (all_sales * (1-d2c_sales_pct))/(distance_nearest_hub_mile^2)))
+```
+
+step 3 : add two index together 
+
+```{r}
+merged_final <- merged_i %>% 
+  mutate(spma  = direct_to_consumer + foodhub_inter)
+```
+
+save the dataset 
+
+```{r}
+write.csv(merged_final, "../data/outcome/merged_final_xz.csv")
+```
+
