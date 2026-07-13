@@ -98,14 +98,10 @@ spma_index <- dat %>%
     has_hub  = !is.na(number_foodhub) & number_foodhub > 0,
 
     dtc_sales          = all_sales * d2c_sales_pct,
-    local_interm_sales = all_sales * (local_sales_pct - d2c_sales_pct),
-    interm_sales       = all_sales * intermediated_sales_pct_derived,
-
-    # second term's numerator depends on whether the county has a hub
-    term2_numer = if_else(has_hub, local_interm_sales, interm_sales),
-
+    interm_sales       = all_sales * (1 - d2c_sales_pct),
+    
     SPMA = dtc_sales / (distance_nearest_farmersmarket_mile^2) +
-           term2_numer / (distance_nearest_hub_mile^2)
+           interm_sales  / (distance_nearest_hub_mile^2)
   )
 
 # quick look
