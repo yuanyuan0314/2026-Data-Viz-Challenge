@@ -2,7 +2,7 @@
 title: "fig_02"
 author: "Xiaoyi Zhao"
 date: "2026-07-12"
-output: html_document
+output: pdf
 ---
 
 ```{r setup, include=FALSE}
@@ -87,10 +87,15 @@ fig_2_Okanogan_Yakima <- merged_final %>%
           group.colours  = c("#861F41", "#E5751F"),
           grid.label.size = 5,
           axis.label.size = 4)+
-  labs(title = "How Foodhub Support Counties?") +
+  labs(title = "From Orchard to Opportunity: \n Food Hubs and Small Farm Market Access at the County Level") +
   theme_void() +
   theme(
-    plot.title      = element_text(face = "bold", size = 14, hjust = 0),
+    plot.title = element_text(
+      face = "bold",
+      hjust = 0.5,        # 0 = left, 0.5 = center, 1 = right
+      size = 12,          # default is ~13.2 for titles; go smaller as needed
+      family = "sans"     # generic sans-serif (Arial/Helvetica depending on OS)
+    ),
     plot.subtitle   = element_text(size = 11, color = "grey30",
                                    margin = margin(b = 10)),
     plot.caption    = element_text(size = 8, color = "grey40", hjust = 0),
@@ -102,6 +107,7 @@ fig_2_Okanogan_Yakima <- merged_final %>%
 
 ggsave("../figures/fig_2_Okanogan_Yakima.pdf", plot = fig_2_Okanogan_Yakima, width = 12, height = 5)
 
+fig_2_Okanogan_Yakima
 ```
 
 
@@ -139,10 +145,15 @@ fig_2_Ventura_Yakima <- merged_final %>%
           group.colours  = c("#861F41", "#E5751F"),
           grid.label.size = 5,
           axis.label.size = 4)+
-  labs(title = "How Foodhub Support Counties?") +
+  labs(title = "From Orchard to Opportunity: \n Food Hubs and Small Farm Market Access at the County Level") +
   theme_void() +
   theme(
-    plot.title      = element_text(face = "bold", size = 14, hjust = 0),
+    plot.title = element_text(
+      face = "bold",
+      hjust = 0.5,        # 0 = left, 0.5 = center, 1 = right
+      size = 12,          # default is ~13.2 for titles; go smaller as needed
+      family = "sans"     # generic sans-serif (Arial/Helvetica depending on OS)
+    ),
     plot.subtitle   = element_text(size = 11, color = "grey30",
                                    margin = margin(b = 10)),
     plot.caption    = element_text(size = 8, color = "grey40", hjust = 0),
@@ -154,6 +165,7 @@ fig_2_Ventura_Yakima <- merged_final %>%
 
 ggsave("../figures/fig_2_Ventura_Yakima.pdf", plot = fig_2_Ventura_Yakima, width = 12, height = 5)
 
+fig_2_Ventura_Yakima
 ```
 
 
@@ -184,10 +196,15 @@ fig_2_Monterey_Kern <- merged_final %>%
           group.colours  = c("#861F41", "#E5751F"),
           grid.label.size = 5,
           axis.label.size = 4)+
-  labs(title = "How Foodhub Support Counties?") +
+  labs(title = "From Orchard to Opportunity: \n Food Hubs and Small Farm Market Access at the County Level") +
   theme_void() +
   theme(
-    plot.title      = element_text(face = "bold", size = 14, hjust = 0),
+    plot.title = element_text(
+      face = "bold",
+      hjust = 0.5,        # 0 = left, 0.5 = center, 1 = right
+      size = 12,          # default is ~13.2 for titles; go smaller as needed
+      family = "sans"     # generic sans-serif (Arial/Helvetica depending on OS)
+    ),
     plot.subtitle   = element_text(size = 11, color = "grey30",
                                    margin = margin(b = 10)),
     plot.caption    = element_text(size = 8, color = "grey40", hjust = 0),
@@ -233,10 +250,15 @@ fig_2_Washington_Benton <- merged_final %>%
           group.colours  = c("#861F41", "#E5751F"),
           grid.label.size = 5,
           axis.label.size = 4)+
-  labs(title = "How Foodhub Support Counties?") +
+  labs(title = "From Orchard to Opportunity: \n Food Hubs and Small Farm Market Access at the County Level") +
   theme_void() +
   theme(
-    plot.title      = element_text(face = "bold", size = 14, hjust = 0),
+    plot.title = element_text(
+      face = "bold",
+      hjust = 0.5,        # 0 = left, 0.5 = center, 1 = right
+      size = 12,          # default is ~13.2 for titles; go smaller as needed
+      family = "sans"     # generic sans-serif (Arial/Helvetica depending on OS)
+    ),
     plot.subtitle   = element_text(size = 11, color = "grey30",
                                    margin = margin(b = 10)),
     plot.caption    = element_text(size = 8, color = "grey40", hjust = 0),
@@ -248,6 +270,7 @@ fig_2_Washington_Benton <- merged_final %>%
 
 ggsave("../figures/fig_2_Washington_Benton.pdf", plot = fig_2_Washington_Benton, width = 12, height = 5)
 
+fig_2_Washington_Benton
 ```
 **Guadalupe, TX vs Cass, MN( Minnisota)**
 
@@ -279,10 +302,15 @@ fig_2_Guadalupe_Cass <- merged_final %>%
           group.colours  = c("#861F41", "#E5751F"),
           grid.label.size = 5,
           axis.label.size = 4)+
-  labs(title = "How Foodhub Support Counties?") +
+  labs(title = "From Orchard to Opportunity: \n Food Hubs and Small Farm Market Access at the County Level") +
   theme_void() +
   theme(
-    plot.title      = element_text(face = "bold", size = 14, hjust = 0),
+    plot.title = element_text(
+      face = "bold",
+      hjust = 0.5,        # 0 = left, 0.5 = center, 1 = right
+      size = 12,          # default is ~13.2 for titles; go smaller as needed
+      family = "sans"     # generic sans-serif (Arial/Helvetica depending on OS)
+    ),
     plot.subtitle   = element_text(size = 11, color = "grey30",
                                    margin = margin(b = 10)),
     plot.caption    = element_text(size = 8, color = "grey40", hjust = 0),
@@ -294,6 +322,7 @@ fig_2_Guadalupe_Cass <- merged_final %>%
 
 ggsave("../figures/fig_2_Guadalupe_Cass.pdf", plot = fig_2_Guadalupe_Cass, width = 12, height = 5)
 
+fig_2_Guadalupe_Cass
 ```
 
 
@@ -323,10 +352,15 @@ fig_2_Grawford_Camden <- merged_final %>%
           group.colours  = c("#861F41", "#E5751F"),
           grid.label.size = 5,
           axis.label.size = 4)+
-  labs(title = "How Foodhub Support Counties?") +
+  labs(title = "From Orchard to Opportunity: \n Food Hubs and Small Farm Market Access at the County Level") +
   theme_void() +
   theme(
-    plot.title      = element_text(face = "bold", size = 14, hjust = 0),
+    plot.title = element_text(
+      face = "bold",
+      hjust = 0.5,        # 0 = left, 0.5 = center, 1 = right
+      size = 12,          # default is ~13.2 for titles; go smaller as needed
+      family = "sans"     # generic sans-serif (Arial/Helvetica depending on OS)
+    ),
     plot.subtitle   = element_text(size = 11, color = "grey30",
                                    margin = margin(b = 10)),
     plot.caption    = element_text(size = 8, color = "grey40", hjust = 0),
@@ -337,10 +371,9 @@ fig_2_Grawford_Camden <- merged_final %>%
   ) + coord_equal(clip = "off")
 
 
-```
-```{r}
 ggsave("../figures/fig_2_Grawford_Camden.pdf", plot = fig_2_Grawford_Camden, width = 12, height = 5)
 
+fig_2_Grawford_Camden
 ```
 
 **Franklin, WA vs. Chilton, Alabama**
@@ -370,10 +403,15 @@ fig_2_Franklin_Chilton <- merged_final %>%
           group.colours  = c("#861F41", "#E5751F"),
           grid.label.size = 5,
           axis.label.size = 4)+
-  labs(title = "How Foodhub Support Counties?") +
+  labs(title = "From Orchard to Opportunity: \n Food Hubs and Small Farm Market Access at the County Level") +
   theme_void() +
   theme(
-    plot.title      = element_text(face = "bold", size = 14, hjust = 0),
+    plot.title = element_text(
+      face = "bold",
+      hjust = 0.5,        # 0 = left, 0.5 = center, 1 = right
+      size = 12,          # default is ~13.2 for titles; go smaller as needed
+      family = "sans"     # generic sans-serif (Arial/Helvetica depending on OS)
+    ),
     plot.subtitle   = element_text(size = 11, color = "grey30",
                                    margin = margin(b = 10)),
     plot.caption    = element_text(size = 8, color = "grey40", hjust = 0),
@@ -385,6 +423,7 @@ fig_2_Franklin_Chilton <- merged_final %>%
 
 ggsave("../figures/fig_2_Franklin_Chilton.pdf", plot = fig_2_Franklin_Chilton, width = 12, height = 5)
 
+fig_2_Franklin_Chilton
 ```
 
 **Greenville County, SC  v.s. Buncombe County, NC**
@@ -414,10 +453,15 @@ fig_2_Greenville_Buncombe <- merged_final %>%
           group.colours  = c("#861F41", "#E5751F"),
           grid.label.size = 5,
           axis.label.size = 4)+
-  labs(title = "How Foodhub Support Counties?") +
+  labs(title = "From Orchard to Opportunity: \n Food Hubs and Small Farm Market Access at the County Level") +
   theme_void() +
   theme(
-    plot.title      = element_text(face = "bold", size = 14, hjust = 0),
+    plot.title = element_text(
+      face = "bold",
+      hjust = 0.5,        # 0 = left, 0.5 = center, 1 = right
+      size = 12,          # default is ~13.2 for titles; go smaller as needed
+      family = "sans"     # generic sans-serif (Arial/Helvetica depending on OS)
+    ),
     plot.subtitle   = element_text(size = 11, color = "grey30",
                                    margin = margin(b = 10)),
     plot.caption    = element_text(size = 8, color = "grey40", hjust = 0),
@@ -460,10 +504,15 @@ fig_2_Marion_Okeechobee <- merged_final %>%
           group.colours  = c("#861F41", "#E5751F"),
           grid.label.size = 5,
           axis.label.size = 4)+
-  labs(title = "How Foodhub Support Counties?") +
+  labs(title = "From Orchard to Opportunity: \n Food Hubs and Small Farm Market Access at the County Level") +
   theme_void() +
   theme(
-    plot.title      = element_text(face = "bold", size = 14, hjust = 0),
+    plot.title = element_text(
+      face = "bold",
+      hjust = 0.5,        # 0 = left, 0.5 = center, 1 = right
+      size = 12,          # default is ~13.2 for titles; go smaller as needed
+      family = "sans"     # generic sans-serif (Arial/Helvetica depending on OS)
+    ),
     plot.subtitle   = element_text(size = 11, color = "grey30",
                                    margin = margin(b = 10)),
     plot.caption    = element_text(size = 8, color = "grey40", hjust = 0),
