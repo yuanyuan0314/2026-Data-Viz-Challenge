@@ -27,6 +27,7 @@ library(readxl)
 library(readr)
 library(units)
 
+library(tidycensus)
 #to make the spider plot
 library(scales)
 
@@ -37,78 +38,33 @@ library(ggradar)
 
 step 1 : load the dataset 
 ```{r}
+# add the statename, we load the statename from the tidycensus first
+state_lookup <- fips_codes %>% 
+  distinct(state_code, state_name)
+
+
 merged_final <- read_csv("../data/outcome/merged_final_xz.csv") %>% 
   select(county_name_hub, county_fips, spma, direct_to_consumer, foodhub_inter, distance_nearest_hub_mile, all_sales, distance_nearest_farmersmarket_mile, all_sales,share) %>% 
   rename(fruit_nut_share = share) %>% 
-  arrange(spma)
+  arrange(fruit_nut_share) %>% 
+  filter(county_fips != "22087",
+         !is.na(fruit_nut_share)) %>% 
+  mutate(state_code = substr(county_fips,1, 2)) %>% 
+  left_join(state_lookup, by = "state_code") %>% 
+  mutate(county_name_hub = paste0(county_name_hub,", ", state_name))
+
+
 ```
 After, identifying, Brazos, Texas(48041), and Kandiyohi, Michigan (27067) , Michigan, both have relatively high spma, but Kandiyohi's direct to consumer index is much lower than that of Dane, but the advantage of Willamson is that the distance to the nearest foodhub is much smaller than that of Dane 
 
-Step 2, make the visualization :  Brazos, Texas(48041), and Kandiyohi, Michigan (27067)
-```{r, fig.width = 12, fig.height = 5}
-merged_final %>%
-  filter(county_fips %in%  c("48041", "27067"))
-```
+###Step 2, make the visualization 
 
-rescale the component so it can be interpret as the location between national max and national min
-```{r}
 
-fig_2_pair_1 <- merged_final %>%
-  mutate(
-    direct_to_consumer        = percent_rank(direct_to_consumer),
-    d2c = percent_rank(-distance_nearest_farmersmarket_mile),
-    foodhub_inter             = percent_rank(foodhub_inter),
-    hub_proximity             = percent_rank(-distance_nearest_hub_mile),
-    all_sales = percent_rank(all_sales),
-    spma = percent_rank(spma)
-  ) %>%
-  filter(county_fips %in%  c("48041", "27067")) %>%
-  select(group = county_name_hub,
-         `Direct To Consumer` = direct_to_consumer,
-         `Hub Access`    = foodhub_inter,
-         `Hub Distance`= hub_proximity,
-         `Direct to Consumer Distance` = d2c,
-         `All Sales` = all_sales,
-         `SPMA` = spma) %>%
-  mutate(group = recode(group,
-                        "Brazos"  = "Brazos County, Texas",
-                        "Kandiyohi" = "Kandiyohi County, Michigan")) %>%
-  ggradar(font.radar = "sans",
-          values.radar   = c("0", "50", "100"),
-          group.colours  = c("#861F41", "#E5751F"),
-          grid.label.size = 5,
-          axis.label.size = 4)+
-  labs(title = "How Foodhub Support Counties?",
-       caption = "Brazo's SPMA is 21792445, and Kandiyohi's SPMA is 80396688") +
-  theme_void() +
-  theme(
-    plot.title      = element_text(face = "bold", size = 14, hjust = 0),
-    plot.subtitle   = element_text(size = 11, color = "grey30",
-                                   margin = margin(b = 10)),
-    plot.caption    = element_text(size = 8, color = "grey40", hjust = 0),
-    legend.position = "bottom",
-    legend.title    = element_text(size = 9),
-    legend.text     = element_text(size = 8),
-    plot.margin     = margin(20, 120, 20, 120)
-  ) + coord_equal(clip = "off")
-
-```
-
-```{r}
-ggsave("../figures/fig_02_xz_pair1.pdf", plot = fig_2_pair_1, width = 12, height = 5)
-
-fig_2_pair_1
-```
-
-Pair2  : Okanogan, Washington v.s. Yakima 
-```{r, fig.width = 12, fig.height = 5}
-merged_final %>%
-  filter(county_fips %in%  c("53047", "53077"))
-```
+**Okanogan, Washington v.s. Yakima **
 
 ```{r}
 
-fig_2_pair_2 <- merged_final %>%
+fig_2_Okanogan_Yakima <- merged_final %>%
   mutate(
     direct_to_consumer        = percent_rank(direct_to_consumer),
     d2c = percent_rank(-distance_nearest_farmersmarket_mile),
@@ -127,9 +83,6 @@ fig_2_pair_2 <- merged_final %>%
          `All Sales` = all_sales,
          `SPMA` = spma,
          `Fruit Nut Share` = fruit_nut_share) %>%
-  mutate(group = recode(group,
-                        "Brazos"  = "Brazos County, Texas",
-                        "Kandiyohi" = "Kandiyohi County, Michigan")) %>%
   ggradar(font.radar = "sans",
           values.radar   = c("0", "50", "100"),
           group.colours  = c("#861F41", "#E5751F"),
@@ -148,15 +101,11 @@ fig_2_pair_2 <- merged_final %>%
     plot.margin     = margin(20, 120, 20, 120)
   ) + coord_equal(clip = "off")
 
+fig_2_pair_01
 ```
 
-```{r}
-ggsave("../figures/fig_02_xz_pair_2.pdf", plot = fig_2_pair_2, width = 12, height = 5)
 
-fig_2_pair_2
-```
-
-Pair3  : Ventura, CA v.s. Yakima , Washington
+**Ventura, CA v.s. Yakima , Washington**
 ```{r, fig.width = 12, fig.height = 5}
 merged_final %>%
   filter(county_fips %in%  c("06111", "53077"))
@@ -164,7 +113,7 @@ merged_final %>%
 
 ```{r}
 
-fig_2_pair_3 <- merged_final %>%
+fig_2_Ventura_Yakima <- merged_final %>%
   mutate(
     direct_to_consumer        = percent_rank(direct_to_consumer),
     d2c = percent_rank(-distance_nearest_farmersmarket_mile),
@@ -207,20 +156,16 @@ fig_2_pair_3 <- merged_final %>%
 ```
 
 ```{r}
-ggsave("../figures/fig_02_xz_pair_3.pdf", plot = fig_2_pair_2, width = 12, height = 5)
+ggsave("../figures/fig_2_Ventura_Yakima.pdf", plot = fig_2_Ventura_Yakima, width = 12, height = 5)
 
-fig_2_pair_3
+fig_2_pair_02
 ```
 
-Pair4  : Monterey, CA v.s. Kern ,CA
-```{r, fig.width = 12, fig.height = 5}
-merged_final %>%
-  filter(county_fips %in%  c("06053", "06029"))
-```
+**Monterey, CA v.s. Kern ,CA**
 
 ```{r}
 
-fig_2_pair_4 <- merged_final %>%
+fig_2_Monterey_Kern <- merged_final %>%
   mutate(
     direct_to_consumer        = percent_rank(direct_to_consumer),
     d2c = percent_rank(-distance_nearest_farmersmarket_mile),
@@ -239,9 +184,103 @@ fig_2_pair_4 <- merged_final %>%
          `All Sales` = all_sales,
          `SPMA` = spma,
          `Fruit Nut Share` = fruit_nut_share) %>%
+  ggradar(font.radar = "sans",
+          values.radar   = c("0", "50", "100"),
+          group.colours  = c("#861F41", "#E5751F"),
+          grid.label.size = 5,
+          axis.label.size = 4)+
+  labs(title = "How Foodhub Support Counties?") +
+  theme_void() +
+  theme(
+    plot.title      = element_text(face = "bold", size = 14, hjust = 0),
+    plot.subtitle   = element_text(size = 11, color = "grey30",
+                                   margin = margin(b = 10)),
+    plot.caption    = element_text(size = 8, color = "grey40", hjust = 0),
+    legend.position = "bottom",
+    legend.title    = element_text(size = 9),
+    legend.text     = element_text(size = 8),
+    plot.margin     = margin(20, 120, 20, 120)
+  ) + coord_equal(clip = "off")
+
+fig_2_Monterey_Kern
+```
+
+
+**Guadalupe, TX vs Guthrie, TN**
+
+```{r}
+
+fig_2_Guadalupe_Guthrie <- merged_final %>%
+  mutate(
+    direct_to_consumer        = percent_rank(direct_to_consumer),
+    d2c = percent_rank(-distance_nearest_farmersmarket_mile),
+    foodhub_inter             = percent_rank(foodhub_inter),
+    hub_proximity             = percent_rank(-distance_nearest_hub_mile),
+    all_sales = percent_rank(all_sales),
+    spma = percent_rank(spma),
+    fruit_nut_share = percent_rank(fruit_nut_share)
+  ) %>%
+  filter(county_fips %in%  c("48187", "19077")) %>%
+  select(group = county_name_hub,
+         `Direct To Consumer` = direct_to_consumer,
+         `Hub Access`    = foodhub_inter,
+         `Hub Distance`= hub_proximity,
+         `Direct to Consumer Distance` = d2c,
+         `All Sales` = all_sales,
+         `SPMA` = spma,
+         `Fruit Nut Share` = fruit_nut_share) %>%
   mutate(group = recode(group,
-                        "Brazos"  = "Brazos County, Texas",
-                        "Kandiyohi" = "Kandiyohi County, Michigan")) %>%
+                        "Guadalupe"  = "Guadalupe County, TX",
+                        "Guthrie" = "Guthrie County, TN")) %>%
+  ggradar(font.radar = "sans",
+          values.radar   = c("0", "50", "100"),
+          group.colours  = c("#861F41", "#E5751F"),
+          grid.label.size = 5,
+          axis.label.size = 4)+
+  labs(title = "How Foodhub Support Counties?") +
+  theme_void() +
+  theme(
+    plot.title      = element_text(face = "bold", size = 14, hjust = 0),
+    plot.subtitle   = element_text(size = 11, color = "grey30",
+                                   margin = margin(b = 10)),
+    plot.caption    = element_text(size = 8, color = "grey40", hjust = 0),
+    legend.position = "bottom",
+    legend.title    = element_text(size = 9),
+    legend.text     = element_text(size = 8),
+    plot.margin     = margin(20, 120, 20, 120)
+  ) + coord_equal(clip = "off")
+
+fig_2_Guadalupe_Guthrie
+```
+
+
+Pair 6: Guadalupe, TX vs Cass, MN( Minnisota)
+
+
+```{r}
+
+fig_2_Guadalupe_Cass <- merged_final %>%
+  mutate(
+    direct_to_consumer        = percent_rank(direct_to_consumer),
+    d2c = percent_rank(-distance_nearest_farmersmarket_mile),
+    foodhub_inter             = percent_rank(foodhub_inter),
+    hub_proximity             = percent_rank(-distance_nearest_hub_mile),
+    all_sales = percent_rank(all_sales),
+    spma = percent_rank(spma),
+    fruit_nut_share = percent_rank(fruit_nut_share)
+  ) %>%
+  filter(county_fips %in%  c("48187", "26027")) %>%
+  select(group = county_name_hub,
+         `Direct To Consumer` = direct_to_consumer,
+         `Hub Access`    = foodhub_inter,
+         `Hub Distance`= hub_proximity,
+         `Direct to Consumer Distance` = d2c,
+         `All Sales` = all_sales,
+         `SPMA` = spma,
+         `Fruit Nut Share` = fruit_nut_share) %>%
+  mutate(group = recode(group,
+                        "Guadalupe"  = "Guadalupe County, TX",
+                        "Cass" = "Cass County, MN")) %>%
   ggradar(font.radar = "sans",
           values.radar   = c("0", "50", "100"),
           group.colours  = c("#861F41", "#E5751F"),
@@ -262,8 +301,50 @@ fig_2_pair_4 <- merged_final %>%
 
 ```
 
-```{r}
-ggsave("../figures/fig_02_xz_pair_4.pdf", plot = fig_2_pair_4, width = 12, height = 5)
 
-fig_2_pair_4
+
+```{r}
+
+fig_2_Grawford_Camden <- merged_final %>%
+  mutate(
+    direct_to_consumer        = percent_rank(direct_to_consumer),
+    d2c = percent_rank(-distance_nearest_farmersmarket_mile),
+    foodhub_inter             = percent_rank(foodhub_inter),
+    hub_proximity             = percent_rank(-distance_nearest_hub_mile),
+    all_sales = percent_rank(all_sales),
+    spma = percent_rank(spma),
+    fruit_nut_share = percent_rank(fruit_nut_share)
+  ) %>%
+  filter(county_fips %in%  c("13079", "13039")) %>%
+  select(group = county_name_hub,
+         `Direct To Consumer` = direct_to_consumer,
+         `Hub Access`    = foodhub_inter,
+         `Hub Distance`= hub_proximity,
+         `Direct to Consumer Distance` = d2c,
+         `All Sales` = all_sales,
+         `SPMA` = spma,
+         `Fruit Nut Share` = fruit_nut_share) %>%
+  ggradar(font.radar = "sans",
+          values.radar   = c("0", "50", "100"),
+          group.colours  = c("#861F41", "#E5751F"),
+          grid.label.size = 5,
+          axis.label.size = 4)+
+  labs(title = "How Foodhub Support Counties?") +
+  theme_void() +
+  theme(
+    plot.title      = element_text(face = "bold", size = 14, hjust = 0),
+    plot.subtitle   = element_text(size = 11, color = "grey30",
+                                   margin = margin(b = 10)),
+    plot.caption    = element_text(size = 8, color = "grey40", hjust = 0),
+    legend.position = "bottom",
+    legend.title    = element_text(size = 9),
+    legend.text     = element_text(size = 8),
+    plot.margin     = margin(20, 120, 20, 120)
+  ) + coord_equal(clip = "off")
+
+
+```
+```{r}
+ggsave("../figures/fig_2_Grawford_Camden.pdf", plot = fig_2_Grawford_Camden, width = 12, height = 5)
+
 ```
