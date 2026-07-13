@@ -11,9 +11,9 @@
 
 <meta name="author" content="Yuanyuan Wen" />
 
-<meta name="date" content="2026-07-07" />
+<meta name="date" content="2026-07-12" />
 
-<title>cl_02_merge</title>
+<title>cl_02_fruitnut_cnty</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -350,193 +350,83 @@ display: none;
 
 
 
-<h1 class="title toc-ignore">cl_02_merge</h1>
+<h1 class="title toc-ignore">cl_02_fruitnut_cnty</h1>
 <h4 class="author">Yuanyuan Wen</h4>
-<h4 class="date">2026-07-07</h4>
+<h4 class="date">2026-07-12</h4>
 
 </div>
 
 
 <div id="purpose" class="section level2">
 <h2>Purpose</h2>
-<p>The goal of this code here: standardize the keys to a 5-digit county
-FIPS and join the three county-level pieces — the nearest food-hub
-distance (cl_01_distance), the nearest farmers-market distance
-(cl_01_farmersmarket_distance), and the SPMA index variables — into one
-table for the index construction.</p>
-<p>Load the library</p>
-<pre class="r"><code>library(readr)     # reads the csv files (and lets us fix the messy one below)
-library(dplyr)     # regular data wrangling once things look like data frames</code></pre>
-<pre><code>## 
-## Attaching package: &#39;dplyr&#39;</code></pre>
-<pre><code>## The following objects are masked from &#39;package:stats&#39;:
-## 
-##     filter, lag</code></pre>
-<pre><code>## The following objects are masked from &#39;package:base&#39;:
-## 
-##     intersect, setdiff, setequal, union</code></pre>
-<div id="step-1" class="section level3">
-<h3>Step 1</h3>
-<p>Read the nearest-hub distance data.</p>
-<p>note: <code>hub_distance_full.csv</code> was written with
-<code>write.csv()</code> from an sf object in cl_01, so it carries two
-quirks. First, <code>write.csv()</code> adds an unnamed row-index column
-at the front. Second, the last column <code>geometry</code> is an R
-point printed as an <strong>unquoted</strong> vector
-<code>c(x, y)</code> (the county centroid), whose internal comma splits
-every row into 13 fields while the header only has 12 names. Every row
-splits the same way, so we simply supply our own 13 column names and
-read positionally (skipping the original header).</p>
-<pre class="r"><code>names_hub &lt;- c(&quot;rowidx&quot;, &quot;GEOID&quot;, &quot;state&quot;, &quot;county_name&quot;, &quot;distance_nearest_hub_mile&quot;,
-               &quot;nearest_hub_name&quot;, &quot;nearest_hub_id&quot;, &quot;hub_county_geoid&quot;, &quot;hub_county_name&quot;,
-               &quot;hub_products&quot;, &quot;hub_desert&quot;, &quot;centroid_x&quot;, &quot;centroid_y&quot;)
-
-hub_raw &lt;- read_csv(&quot;../data/outcome/hub_distance_full.csv&quot;,
-                    skip = 1, col_names = names_hub,
-                    col_types = cols(.default = col_character()))
-
-hub_distance &lt;- hub_raw %&gt;%
-  select(-rowidx) %&gt;%                                   # drop the write.csv row index
-  mutate(
-    distance_nearest_hub_mile = as.numeric(distance_nearest_hub_mile),
-    # the split &quot;c(x&quot; / &quot;y)&quot; pieces are cleaned back into the centroid numbers
-    centroid_x  = as.numeric(gsub(&quot;[^0-9.eE+-]&quot;, &quot;&quot;, centroid_x)),
-    centroid_y  = as.numeric(gsub(&quot;[^0-9.eE+-]&quot;, &quot;&quot;, centroid_y)),
-    county_fips = sprintf(&quot;%05d&quot;, as.integer(GEOID))    # 5-digit county FIPS key
-  )
-
-#glimpse(hub_distance)</code></pre>
+<p>Compute each county’s fruit &amp; nut share = (county fruit &amp; nut
+sales) / (county total farm-related income receipts), using USDA-NASS
+data. The share is used to identify counties dominated by fruit &amp;
+nut production.</p>
+<pre class="r"><code>library(rnassqs)</code></pre>
+<pre><code>## Warning: package &#39;rnassqs&#39; was built under R version 4.5.3</code></pre>
+<pre class="r"><code>library(tidyverse)</code></pre>
+<pre><code>## Warning: package &#39;ggplot2&#39; was built under R version 4.5.3</code></pre>
+<pre><code>## Warning: package &#39;tibble&#39; was built under R version 4.5.3</code></pre>
+<pre><code>## Warning: package &#39;dplyr&#39; was built under R version 4.5.3</code></pre>
+<pre><code>## Warning: package &#39;stringr&#39; was built under R version 4.5.3</code></pre>
+<pre><code>## ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
+## ✔ dplyr     1.2.1     ✔ readr     2.1.5
+## ✔ forcats   1.0.0     ✔ stringr   1.6.0
+## ✔ ggplot2   4.0.3     ✔ tibble    3.3.1
+## ✔ lubridate 1.9.4     ✔ tidyr     1.3.1
+## ✔ purrr     1.0.4     
+## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+## ✖ dplyr::filter() masks stats::filter()
+## ✖ dplyr::lag()    masks stats::lag()
+## ℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors</code></pre>
 </div>
-<div id="step-2" class="section level3">
-<h3>Step 2</h3>
-<p>Read SPMA_index_variables.csv (filtered from FAME 2.0). fips is
-stored as a numeric, so states with FIPS codes below 10 lose their
-leading zero (e.g., <code>1001</code> instead of <code>01001</code>). We
-read it as a character and pad to a 5-digit key.</p>
-<pre class="r"><code>spma &lt;- read_csv(&quot;../data/outcome/fame_variables.csv&quot;,
-                 col_types = cols(fips = col_character())) %&gt;%
-  mutate(county_fips = sprintf(&quot;%05d&quot;, as.integer(fips)))
-
-#glimpse(spma)</code></pre>
+<div id="api-setup" class="section level1">
+<h1>API Setup</h1>
+<pre class="r"><code># nassqs_auth(key = &quot;your NASS API&quot;)</code></pre>
 </div>
-<div id="step-3" class="section level3">
-<h3>Step 3</h3>
-<p>Read the nearest farmers-market distance (from
-cl_01_farmersmarket_distance).</p>
-<p>note: <code>farmersmarket_distance_full.csv</code> has the same
-<code>write.csv()</code> + geometry <code>c(x, y)</code> quirk (12 data
-fields vs 11 headers, with the split geometry landing in
-<code>geo_x</code> / <code>geo_y</code>), so we read it positionally too
-and keep only the farmers-market variables.</p>
-<pre class="r"><code>names_fm &lt;- c(&quot;rowidx&quot;, &quot;GEOID&quot;, &quot;state&quot;, &quot;county_name&quot;, &quot;geo_x&quot;, &quot;geo_y&quot;,
-              &quot;distance_nearest_farmersmarket_mile&quot;, &quot;nearest_farmersmarket_name&quot;,
-              &quot;nearest_farmersmarket_id&quot;, &quot;market_county_geoid&quot;, &quot;market_county_name&quot;,
-              &quot;farmersmarket_desert&quot;)
-
-fm &lt;- read_csv(&quot;../data/outcome/farmersmarket_distance_full.csv&quot;,
-               skip = 1, col_names = names_fm,
-               col_types = cols(.default = col_character())) %&gt;%
-  transmute(
-    county_fips = sprintf(&quot;%05d&quot;, as.integer(GEOID)),
-    distance_nearest_farmersmarket_mile = as.numeric(distance_nearest_farmersmarket_mile),
-    nearest_farmersmarket_name,
-    nearest_farmersmarket_id,
-    market_county_geoid,
-    market_county_name,
-    farmersmarket_desert = as.logical(farmersmarket_desert)
-  )
-
-#glimpse(fm)</code></pre>
-<p><strong>validation</strong>: all three pieces should be one row per
-county, and their keys should line up.</p>
-<pre class="r"><code>c(hub_rows = nrow(hub_distance), hub_keys = n_distinct(hub_distance$county_fips),
-  spma_rows = nrow(spma),        spma_keys = n_distinct(spma$county_fips),
-  fm_rows = nrow(fm),            fm_keys = n_distinct(fm$county_fips))</code></pre>
-<pre><code>##  hub_rows  hub_keys spma_rows spma_keys   fm_rows   fm_keys 
-##      3144      3144      3144      3144      3109      3109</code></pre>
-<pre class="r"><code># how many counties are shared across hub-distance and SPMA
-length(intersect(hub_distance$county_fips, spma$county_fips))</code></pre>
-<pre><code>## [1] 3144</code></pre>
-<pre class="r"><code>setdiff(hub_distance$county_fips, spma$county_fips)   # only in hub_distance</code></pre>
-<pre><code>## character(0)</code></pre>
-<pre class="r"><code>setdiff(spma$county_fips, hub_distance$county_fips)   # only in SPMA</code></pre>
-<pre><code>## character(0)</code></pre>
+<div id="fetch-fruit-nut-data" class="section level1">
+<h1>Fetch Fruit &amp; Nut Data</h1>
+<pre class="r"><code>df_fruitnut &lt;- nassqs(list(
+  commodity_desc = &quot;FRUIT &amp; TREE NUT TOTALS&quot;,
+  agg_level_desc = &quot;COUNTY&quot;,
+  year__GE       = 2022,
+  short_desc = &quot;FRUIT &amp; TREE NUT TOTALS - SALES, MEASURED IN $&quot;,
+  domain_desc = &quot;TOTAL&quot;
+)) </code></pre>
+<pre><code>## Downloading: 16 kB     Downloading: 16 kB     Downloading: 16 kB     Downloading: 16 kB     Downloading: 16 kB     Downloading: 16 kB     Downloading: 32 kB     Downloading: 32 kB     Downloading: 42 kB     Downloading: 42 kB     Downloading: 42 kB     Downloading: 42 kB     Downloading: 59 kB     Downloading: 59 kB     Downloading: 59 kB     Downloading: 59 kB     Downloading: 66 kB     Downloading: 66 kB     Downloading: 82 kB     Downloading: 82 kB     Downloading: 82 kB     Downloading: 82 kB     Downloading: 98 kB     Downloading: 98 kB     Downloading: 98 kB     Downloading: 98 kB     Downloading: 98 kB     Downloading: 98 kB     Downloading: 110 kB     Downloading: 110 kB     Downloading: 110 kB     Downloading: 110 kB     Downloading: 130 kB     Downloading: 130 kB     Downloading: 130 kB     Downloading: 130 kB     Downloading: 130 kB     Downloading: 130 kB     Downloading: 150 kB     Downloading: 150 kB     Downloading: 150 kB     Downloading: 150 kB     Downloading: 160 kB     Downloading: 160 kB     Downloading: 160 kB     Downloading: 160 kB     Downloading: 180 kB     Downloading: 180 kB     Downloading: 180 kB     Downloading: 180 kB     Downloading: 200 kB     Downloading: 200 kB     Downloading: 200 kB     Downloading: 200 kB     Downloading: 210 kB     Downloading: 210 kB     Downloading: 210 kB     Downloading: 210 kB     Downloading: 230 kB     Downloading: 230 kB     Downloading: 230 kB     Downloading: 230 kB     Downloading: 230 kB     Downloading: 230 kB     Downloading: 250 kB     Downloading: 250 kB     Downloading: 250 kB     Downloading: 250 kB     Downloading: 260 kB     Downloading: 260 kB     Downloading: 260 kB     Downloading: 260 kB     Downloading: 280 kB     Downloading: 280 kB     Downloading: 280 kB     Downloading: 280 kB     Downloading: 280 kB     Downloading: 280 kB     Downloading: 300 kB     Downloading: 300 kB     Downloading: 310 kB     Downloading: 310 kB     Downloading: 310 kB     Downloading: 310 kB     Downloading: 330 kB     Downloading: 330 kB     Downloading: 330 kB     Downloading: 330 kB     Downloading: 350 kB     Downloading: 350 kB     Downloading: 350 kB     Downloading: 350 kB     Downloading: 360 kB     Downloading: 360 kB     Downloading: 360 kB     Downloading: 360 kB     Downloading: 360 kB     Downloading: 360 kB     Downloading: 380 kB     Downloading: 380 kB     Downloading: 380 kB     Downloading: 380 kB     Downloading: 380 kB     Downloading: 380 kB     Downloading: 390 kB     Downloading: 390 kB     Downloading: 390 kB     Downloading: 390 kB     Downloading: 410 kB     Downloading: 410 kB     Downloading: 410 kB     Downloading: 410 kB     Downloading: 430 kB     Downloading: 430 kB     Downloading: 430 kB     Downloading: 430 kB     Downloading: 440 kB     Downloading: 440 kB     Downloading: 440 kB     Downloading: 440 kB     Downloading: 460 kB     Downloading: 460 kB     Downloading: 480 kB     Downloading: 480 kB     Downloading: 480 kB     Downloading: 480 kB     Downloading: 490 kB     Downloading: 490 kB     Downloading: 510 kB     Downloading: 510 kB     Downloading: 510 kB     Downloading: 510 kB     Downloading: 510 kB     Downloading: 510 kB     Downloading: 530 kB     Downloading: 530 kB     Downloading: 540 kB     Downloading: 540 kB     Downloading: 560 kB     Downloading: 560 kB     Downloading: 570 kB     Downloading: 570 kB     Downloading: 570 kB     Downloading: 570 kB     Downloading: 590 kB     Downloading: 590 kB     Downloading: 590 kB     Downloading: 590 kB     Downloading: 610 kB     Downloading: 610 kB     Downloading: 610 kB     Downloading: 610 kB     Downloading: 620 kB     Downloading: 620 kB     Downloading: 640 kB     Downloading: 640 kB     Downloading: 640 kB     Downloading: 640 kB     Downloading: 660 kB     Downloading: 660 kB     Downloading: 660 kB     Downloading: 660 kB     Downloading: 660 kB     Downloading: 660 kB     Downloading: 660 kB     Downloading: 660 kB     Downloading: 670 kB     Downloading: 670 kB     Downloading: 670 kB     Downloading: 670 kB     Downloading: 670 kB     Downloading: 670 kB     Downloading: 690 kB     Downloading: 690 kB     Downloading: 710 kB     Downloading: 710 kB     Downloading: 710 kB     Downloading: 710 kB     Downloading: 720 kB     Downloading: 720 kB     Downloading: 720 kB     Downloading: 720 kB     Downloading: 740 kB     Downloading: 740 kB     Downloading: 750 kB     Downloading: 750 kB     Downloading: 750 kB     Downloading: 750 kB     Downloading: 750 kB     Downloading: 750 kB     Downloading: 770 kB     Downloading: 770 kB     Downloading: 790 kB     Downloading: 790 kB     Downloading: 800 kB     Downloading: 800 kB     Downloading: 800 kB     Downloading: 800 kB     Downloading: 820 kB     Downloading: 820 kB     Downloading: 840 kB     Downloading: 840 kB     Downloading: 840 kB     Downloading: 840 kB     Downloading: 850 kB     Downloading: 850 kB     Downloading: 850 kB     Downloading: 850 kB     Downloading: 870 kB     Downloading: 870 kB     Downloading: 870 kB     Downloading: 870 kB     Downloading: 870 kB     Downloading: 870 kB     Downloading: 890 kB     Downloading: 890 kB     Downloading: 890 kB     Downloading: 890 kB     Downloading: 900 kB     Downloading: 900 kB     Downloading: 900 kB     Downloading: 900 kB     Downloading: 920 kB     Downloading: 920 kB     Downloading: 920 kB     Downloading: 920 kB     Downloading: 930 kB     Downloading: 930 kB     Downloading: 950 kB     Downloading: 950 kB     Downloading: 950 kB     Downloading: 950 kB     Downloading: 970 kB     Downloading: 970 kB     Downloading: 970 kB     Downloading: 970 kB     Downloading: 970 kB     Downloading: 970 kB     Downloading: 980 kB     Downloading: 980 kB     Downloading: 1 MB     Downloading: 1 MB     Downloading: 1 MB     Downloading: 1 MB     Downloading: 1 MB     Downloading: 1 MB     Downloading: 1 MB     Downloading: 1 MB     Downloading: 1 MB     Downloading: 1 MB     Downloading: 1 MB     Downloading: 1 MB     Downloading: 1 MB     Downloading: 1 MB     Downloading: 1.1 MB     Downloading: 1.1 MB     Downloading: 1.1 MB     Downloading: 1.1 MB     Downloading: 1.1 MB     Downloading: 1.1 MB     Downloading: 1.1 MB     Downloading: 1.1 MB     Downloading: 1.1 MB     Downloading: 1.1 MB     Downloading: 1.1 MB     Downloading: 1.1 MB     Downloading: 1.1 MB     Downloading: 1.1 MB     Downloading: 1.1 MB     Downloading: 1.1 MB     Downloading: 1.1 MB     Downloading: 1.1 MB     Downloading: 1.2 MB     Downloading: 1.2 MB     Downloading: 1.2 MB     Downloading: 1.2 MB     Downloading: 1.2 MB     Downloading: 1.2 MB     Downloading: 1.2 MB     Downloading: 1.2 MB     Downloading: 1.2 MB     Downloading: 1.2 MB     Downloading: 1.2 MB     Downloading: 1.2 MB     Downloading: 1.2 MB     Downloading: 1.2 MB     Downloading: 1.2 MB     Downloading: 1.2 MB</code></pre>
+<pre class="r"><code>df_fruitnut$fips &lt;- paste0(df_fruitnut$state_fips_code,df_fruitnut$county_code)  
+length(unique(df_fruitnut$fips))</code></pre>
+<pre><code>## [1] 2711</code></pre>
+<pre class="r"><code>df_fruitnut &lt;- df_fruitnut %&gt;% select(fips,Value,county_name,state_name) %&gt;% rename(fruitnut_sale=Value)</code></pre>
 </div>
-<div id="step-4" class="section level3">
-<h3>Step 4</h3>
-<p>Join the three tables on the county FIPS key.
-<code>hub_distance</code> and <code>fm</code> share <code>state</code> /
-<code>county_name</code> columns, so we suffix to keep everything.</p>
-<pre class="r"><code>merged &lt;- hub_distance %&gt;%
-  inner_join(spma, by = &quot;county_fips&quot;, suffix = c(&quot;_hub&quot;, &quot;_spma&quot;)) %&gt;%
-  left_join(fm, by = &quot;county_fips&quot;, suffix = c(&quot;&quot;, &quot;_fm&quot;)) %&gt;%
-  relocate(county_fips)
-
-# (number of counties) x (number of variables)
-dim(merged)</code></pre>
-<pre><code>## [1] 3144   47</code></pre>
+<div id="fetch-farm-income-data" class="section level1">
+<h1>Fetch Farm Income Data</h1>
+<pre class="r"><code>df_farm_ttl &lt;- nassqs(list(
+  commodity_desc = &quot;INCOME, FARM-RELATED&quot;,
+  agg_level_desc = &quot;COUNTY&quot;,
+  year__GE       = 2022,
+  domain_desc = &quot;TOTAL&quot;,
+  short_desc = &quot;INCOME, FARM-RELATED - RECEIPTS, MEASURED IN $&quot;
+))</code></pre>
+<pre><code>## Downloading: 30 kB     Downloading: 30 kB     Downloading: 30 kB     Downloading: 30 kB     Downloading: 59 kB     Downloading: 59 kB     Downloading: 59 kB     Downloading: 59 kB     Downloading: 66 kB     Downloading: 66 kB     Downloading: 82 kB     Downloading: 82 kB     Downloading: 98 kB     Downloading: 98 kB     Downloading: 110 kB     Downloading: 110 kB     Downloading: 130 kB     Downloading: 130 kB     Downloading: 130 kB     Downloading: 130 kB     Downloading: 140 kB     Downloading: 140 kB     Downloading: 160 kB     Downloading: 160 kB     Downloading: 160 kB     Downloading: 160 kB     Downloading: 180 kB     Downloading: 180 kB     Downloading: 190 kB     Downloading: 190 kB     Downloading: 210 kB     Downloading: 210 kB     Downloading: 210 kB     Downloading: 210 kB     Downloading: 230 kB     Downloading: 230 kB     Downloading: 240 kB     Downloading: 240 kB     Downloading: 240 kB     Downloading: 240 kB     Downloading: 260 kB     Downloading: 260 kB     Downloading: 260 kB     Downloading: 260 kB     Downloading: 280 kB     Downloading: 280 kB     Downloading: 290 kB     Downloading: 290 kB     Downloading: 290 kB     Downloading: 290 kB     Downloading: 310 kB     Downloading: 310 kB     Downloading: 310 kB     Downloading: 310 kB     Downloading: 320 kB     Downloading: 320 kB     Downloading: 340 kB     Downloading: 340 kB     Downloading: 340 kB     Downloading: 340 kB     Downloading: 360 kB     Downloading: 360 kB     Downloading: 370 kB     Downloading: 370 kB     Downloading: 370 kB     Downloading: 370 kB     Downloading: 390 kB     Downloading: 390 kB     Downloading: 410 kB     Downloading: 410 kB     Downloading: 410 kB     Downloading: 410 kB     Downloading: 420 kB     Downloading: 420 kB     Downloading: 440 kB     Downloading: 440 kB     Downloading: 440 kB     Downloading: 440 kB     Downloading: 440 kB     Downloading: 440 kB     Downloading: 460 kB     Downloading: 460 kB     Downloading: 470 kB     Downloading: 470 kB     Downloading: 470 kB     Downloading: 470 kB     Downloading: 490 kB     Downloading: 490 kB     Downloading: 490 kB     Downloading: 490 kB     Downloading: 500 kB     Downloading: 500 kB     Downloading: 500 kB     Downloading: 500 kB     Downloading: 500 kB     Downloading: 500 kB     Downloading: 520 kB     Downloading: 520 kB     Downloading: 540 kB     Downloading: 540 kB     Downloading: 540 kB     Downloading: 540 kB     Downloading: 550 kB     Downloading: 550 kB     Downloading: 550 kB     Downloading: 550 kB     Downloading: 570 kB     Downloading: 570 kB     Downloading: 590 kB     Downloading: 590 kB     Downloading: 600 kB     Downloading: 600 kB     Downloading: 600 kB     Downloading: 600 kB     Downloading: 600 kB     Downloading: 600 kB     Downloading: 620 kB     Downloading: 620 kB     Downloading: 640 kB     Downloading: 640 kB     Downloading: 650 kB     Downloading: 650 kB     Downloading: 650 kB     Downloading: 650 kB     Downloading: 670 kB     Downloading: 670 kB     Downloading: 670 kB     Downloading: 670 kB     Downloading: 690 kB     Downloading: 690 kB     Downloading: 700 kB     Downloading: 700 kB     Downloading: 700 kB     Downloading: 700 kB     Downloading: 720 kB     Downloading: 720 kB     Downloading: 720 kB     Downloading: 720 kB     Downloading: 730 kB     Downloading: 730 kB     Downloading: 730 kB     Downloading: 730 kB     Downloading: 750 kB     Downloading: 750 kB     Downloading: 750 kB     Downloading: 750 kB     Downloading: 770 kB     Downloading: 770 kB     Downloading: 780 kB     Downloading: 780 kB     Downloading: 780 kB     Downloading: 780 kB     Downloading: 800 kB     Downloading: 800 kB     Downloading: 820 kB     Downloading: 820 kB     Downloading: 820 kB     Downloading: 820 kB     Downloading: 830 kB     Downloading: 830 kB     Downloading: 830 kB     Downloading: 830 kB     Downloading: 850 kB     Downloading: 850 kB     Downloading: 850 kB     Downloading: 850 kB     Downloading: 870 kB     Downloading: 870 kB     Downloading: 880 kB     Downloading: 880 kB     Downloading: 880 kB     Downloading: 880 kB     Downloading: 900 kB     Downloading: 900 kB     Downloading: 900 kB     Downloading: 900 kB     Downloading: 900 kB     Downloading: 900 kB     Downloading: 910 kB     Downloading: 910 kB     Downloading: 910 kB     Downloading: 910 kB     Downloading: 930 kB     Downloading: 930 kB     Downloading: 950 kB     Downloading: 950 kB     Downloading: 950 kB     Downloading: 950 kB     Downloading: 960 kB     Downloading: 960 kB     Downloading: 980 kB     Downloading: 980 kB     Downloading: 980 kB     Downloading: 980 kB     Downloading: 1,000 kB     Downloading: 1,000 kB     Downloading: 1,000 kB     Downloading: 1,000 kB     Downloading: 1 MB     Downloading: 1 MB     Downloading: 1 MB     Downloading: 1 MB     Downloading: 1 MB     Downloading: 1 MB     Downloading: 1 MB     Downloading: 1 MB     Downloading: 1.1 MB     Downloading: 1.1 MB     Downloading: 1.1 MB     Downloading: 1.1 MB     Downloading: 1.1 MB     Downloading: 1.1 MB     Downloading: 1.1 MB     Downloading: 1.1 MB     Downloading: 1.1 MB     Downloading: 1.1 MB     Downloading: 1.1 MB     Downloading: 1.1 MB     Downloading: 1.1 MB     Downloading: 1.1 MB     Downloading: 1.1 MB     Downloading: 1.1 MB     Downloading: 1.1 MB     Downloading: 1.1 MB     Downloading: 1.1 MB     Downloading: 1.1 MB     Downloading: 1.1 MB     Downloading: 1.1 MB     Downloading: 1.2 MB     Downloading: 1.2 MB     Downloading: 1.2 MB     Downloading: 1.2 MB     Downloading: 1.2 MB     Downloading: 1.2 MB     Downloading: 1.2 MB     Downloading: 1.2 MB     Downloading: 1.2 MB     Downloading: 1.2 MB     Downloading: 1.2 MB     Downloading: 1.2 MB     Downloading: 1.2 MB     Downloading: 1.2 MB     Downloading: 1.2 MB     Downloading: 1.2 MB     Downloading: 1.2 MB     Downloading: 1.2 MB     Downloading: 1.3 MB     Downloading: 1.3 MB     Downloading: 1.3 MB     Downloading: 1.3 MB     Downloading: 1.3 MB     Downloading: 1.3 MB     Downloading: 1.3 MB     Downloading: 1.3 MB     Downloading: 1.3 MB     Downloading: 1.3 MB     Downloading: 1.3 MB     Downloading: 1.3 MB     Downloading: 1.3 MB     Downloading: 1.3 MB     Downloading: 1.3 MB     Downloading: 1.3 MB     Downloading: 1.3 MB     Downloading: 1.3 MB     Downloading: 1.4 MB     Downloading: 1.4 MB     Downloading: 1.4 MB     Downloading: 1.4 MB     Downloading: 1.4 MB     Downloading: 1.4 MB</code></pre>
+<pre class="r"><code>df_farm_ttl$fips &lt;- paste0(df_farm_ttl$state_fips_code,df_farm_ttl$county_code)  
+length(unique(df_farm_ttl$fips))</code></pre>
+<pre><code>## [1] 3067</code></pre>
+<pre class="r"><code>df_farm_ttl &lt;- df_farm_ttl %&gt;% select(fips,Value,county_name,state_name) %&gt;% rename(farm_sale=Value)</code></pre>
 </div>
+<div id="merge" class="section level1">
+<h1>Merge</h1>
+<pre class="r"><code>df_merge &lt;- merge(df_farm_ttl,df_fruitnut,by=&quot;fips&quot;,all=TRUE)</code></pre>
 </div>
-<div id="look-at-the-joined-table" class="section level1">
-<h1>look at the joined table</h1>
-<pre class="r"><code>glimpse(merged)</code></pre>
-<pre><code>## Rows: 3,144
-## Columns: 47
-## $ county_fips                                                                &lt;chr&gt; …
-## $ GEOID                                                                      &lt;chr&gt; …
-## $ state                                                                      &lt;chr&gt; …
-## $ county_name_hub                                                            &lt;chr&gt; …
-## $ distance_nearest_hub_mile                                                  &lt;dbl&gt; …
-## $ nearest_hub_name                                                           &lt;chr&gt; …
-## $ nearest_hub_id                                                             &lt;chr&gt; …
-## $ hub_county_geoid                                                           &lt;chr&gt; …
-## $ hub_county_name                                                            &lt;chr&gt; …
-## $ hub_products                                                               &lt;chr&gt; …
-## $ hub_desert                                                                 &lt;chr&gt; …
-## $ centroid_x                                                                 &lt;dbl&gt; …
-## $ centroid_y                                                                 &lt;dbl&gt; …
-## $ fips                                                                       &lt;chr&gt; …
-## $ ansicode                                                                   &lt;dbl&gt; …
-## $ county_name_spma                                                           &lt;chr&gt; …
-## $ state_name                                                                 &lt;chr&gt; …
-## $ state_abbrev                                                               &lt;chr&gt; …
-## $ all_farms                                                                  &lt;dbl&gt; …
-## $ all_sales                                                                  &lt;dbl&gt; …
-## $ annual_avg_estabs_count_naics_4244_grocery_and_related_product_wholesalers &lt;dbl&gt; …
-## $ annual_avg_estabs_count_naics_4245_farm_product_raw_material_merch._whls.  &lt;dbl&gt; …
-## $ annual_avg_estabs_count_naics_44511_supermarkets_and_other_grocery_stores  &lt;dbl&gt; …
-## $ annual_avg_estabs_count_naics_4451_grocery_stores                          &lt;dbl&gt; …
-## $ d2c_farms_pct                                                              &lt;dbl&gt; …
-## $ d2c_sales_pct                                                              &lt;dbl&gt; …
-## $ intermediated_farms_pct                                                    &lt;dbl&gt; …
-## $ intermediated_sales_pct                                                    &lt;dbl&gt; …
-## $ local_sales_pct                                                            &lt;dbl&gt; …
-## $ number_colleges_universities                                               &lt;dbl&gt; …
-## $ number_csa                                                                 &lt;dbl&gt; …
-## $ number_farmersmarket                                                       &lt;dbl&gt; …
-## $ number_foodhub                                                             &lt;dbl&gt; …
-## $ number_healthcare_facilities                                               &lt;dbl&gt; …
-## $ number_k12_schools                                                         &lt;dbl&gt; …
-## $ number_onfarmmarket                                                        &lt;dbl&gt; …
-## $ overall_food_insecurity_rate                                               &lt;dbl&gt; …
-## $ pct_households_with_no_vehicle                                             &lt;dbl&gt; …
-## $ pct_laccess_lowi                                                           &lt;dbl&gt; …
-## $ total_acres_operated                                                       &lt;dbl&gt; …
-## $ valueadded_farms_pct                                                       &lt;dbl&gt; …
-## $ distance_nearest_farmersmarket_mile                                        &lt;dbl&gt; …
-## $ nearest_farmersmarket_name                                                 &lt;chr&gt; …
-## $ nearest_farmersmarket_id                                                   &lt;chr&gt; …
-## $ market_county_geoid                                                        &lt;chr&gt; …
-## $ market_county_name                                                         &lt;chr&gt; …
-## $ farmersmarket_desert                                                       &lt;lgl&gt; …</code></pre>
-<div id="save-the-dataset" class="section level3">
-<h3>save the dataset</h3>
-<p>note: Save with row.names = FALSE to avoid writing an unnamed index
-column that would complicate later reads.</p>
-<pre class="r"><code>write.csv(merged,
-          &quot;../data/outcome/distance_SPMA_merged.csv&quot;,
-          row.names = FALSE)</code></pre>
+<div id="calculate-share" class="section level1">
+<h1>Calculate share</h1>
+<pre class="r"><code>df_merge$share &lt;- df_merge$fruitnut_sale/df_merge$farm_sale
+df_merge &lt;- df_merge %&gt;% select(-county_name.y,-state_name.y)</code></pre>
 </div>
+<div id="save" class="section level1">
+<h1>Save</h1>
+<pre class="r"><code>write.csv(df_merge,&quot;D:/0 Project/2026-Data-Viz-Challenge/data/outcome/fruitnut_share.csv&quot;)</code></pre>
 </div>
 
 

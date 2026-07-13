@@ -1,7 +1,7 @@
 ---
-title: "cl_02_merge"
+title: "cl_03_merge"
 author: "Yuanyuan Wen"
-date: "2026-07-07"
+date: "2026-07-13"
 output: html_document
 ---
 ## Purpose
@@ -101,13 +101,22 @@ setdiff(spma$county_fips, hub_distance$county_fips)   # only in SPMA
 ```
 
 ### Step 4
-Join the three tables on the county FIPS key. `hub_distance` and `fm` share `state` /
+Read the fruit&nut share data (from cl_02_fruitnut_cnty.Rmd).
+
+```{r}
+fruitnut_share <- read_csv("../data/outcome/fruitnut_share.csv") %>% rename(county_fips=fips)
+```
+
+
+### Step 5
+Join the four tables on the county FIPS key. `hub_distance` and `fm` share `state` /
 `county_name` columns, so we suffix to keep everything.
 
 ```{r}
 merged <- hub_distance %>%
-  inner_join(spma, by = "county_fips", suffix = c("_hub", "_spma")) %>%
+  left_join(spma, by = "county_fips", suffix = c("_hub", "_spma")) %>%
   left_join(fm, by = "county_fips", suffix = c("", "_fm")) %>%
+  left_join(fruitnut_share, by = "county_fips", suffix = c("", "_fn")) %>%
   relocate(county_fips)
 
 # (number of counties) x (number of variables)
