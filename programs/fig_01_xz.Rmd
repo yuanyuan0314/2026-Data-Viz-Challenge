@@ -26,6 +26,7 @@ library(ggplot2)
 library(mapview)
 library(readxl)
 library(units)
+library(readr)
 ```
 
 
@@ -76,9 +77,9 @@ ggplot2::ggplot(index_map) +
 ) +
   coord_sf(crs = 5070) +           # Albers Equal Area projection
   labs(
-    title    = "Small-Producer Market Access (SPMA) Index, State Means",
+    title    = "Small-Producer Market Access (SPMA) Index in State Means",
     subtitle = "Higher = better weighted access to farmers markets & food hubs",
-    caption  = "Gray = no data. Index rescaled to 0–100 relative to the highest state."
+    caption  = "Gray = no data. Index rescaled to 0–100 relative to the highest state. Pink dots = Location of Foodhubs."
   ) +
   theme_void() +
   theme(
@@ -138,7 +139,7 @@ fig_1 <- ggplot2::ggplot(index_map) +
 ) +
   coord_sf(crs = 5070) +           # Albers Equal Area projection
   labs(
-    title    = "Small-Producer Market Access (SPMA) Index, State Means",
+    title    = "Small-Producer Market Access (SPMA) Index in State Means",
     subtitle = "Higher = better weighted access to farmers markets & food hubs",
     caption  = "Gray = no data. Index rescaled to 0–100 relative to the highest state. Pink Dots = the location of Foodhubs"
   ) +

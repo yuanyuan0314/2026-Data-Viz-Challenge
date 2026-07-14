@@ -19,7 +19,11 @@ knitr::opts_chunk$set(
 2. the county comparison plot will compare the differnce in similar spma but different 
  composition 
 
-
+### Note 
+\begin{itemize}
+  \item The index and the factors represented in the spider graph are percentile
+  \item Since local intermediate sale percentage has a lot of missing values, this county comparison use $(1-(\text{direct to consumer sales' share}))$ as the the estimation of the food hub intermediated sale 
+\end{itemize}
 ```{r include=FALSE}
 library(tigris)    # downloads Census TIGER shapefiles (county boundaries)
 library(sf)        # the workhorse: stores and manipulates spatial data
@@ -44,11 +48,9 @@ library(ggradar)
 # add the statename, we load the statename from the tidycensus first
 state_lookup <- fips_codes %>% 
   distinct(state_code, state_name)
-
-
+  
 merged_final <- read_csv("../data/outcome/merged_final_xz.csv") %>% 
   select(county_name_hub, county_fips, spma, direct_to_consumer, foodhub_inter, distance_nearest_hub_mile, all_sales, distance_nearest_farmersmarket_mile, all_sales, d2c_sales_pct, foodhub_share, share) %>% 
-  mutate(d2c_sales_pct = if_else(d2c_sales_pct >= 1, 1, d2c_sales_pct)) %>% 
   rename(fruit_nut_share = share) %>% 
   arrange(fruit_nut_share) %>% 
   filter(county_fips != "22087",
