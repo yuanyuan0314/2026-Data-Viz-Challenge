@@ -15,9 +15,8 @@ knitr::opts_chunk$set(
 ```
 
 ## Purpose 
-1. the purpose of this file is to geneat the county comparison plot 
-2. the county comparison plot will compare the differnce in similar spma but different 
- composition 
+1. the purpose of this file is to geneat the county comparison plot with stories behind
+
 
 ### Note 
 \begin{itemize}
@@ -42,6 +41,28 @@ library(scales)
 #devtools::install_github("ricardo-bion/ggradar")
 library(ggradar)
 
+library(showtext)
+library(sysfonts)
+library(patchwork)
+library(ggtext)
+
+```
+
+Specify the font 
+Note: this is consistent with our figure 01 font 
+```{r}
+font_add_google(
+  name = "DM Serif Display",
+  family = "title_font"
+)
+
+font_add_google(
+  name = "DM Sans",
+  family = "body_font"
+)
+
+showtext::showtext_auto(TRUE)
+
 ```
 
 ```{r include=FALSE}
@@ -62,9 +83,10 @@ merged_final <- read_csv("../data/outcome/merged_final_xz.csv") %>%
 
 ```
 \newpage
+
 ## County Comparison
 
-### **Okanogan, Washington v.s. Yakima **
+###**Okanogan, Washington v.s. Yakima**
 
 ```{r echo=FALSE, fig.width= 12, fig.height= 5}
 
@@ -114,7 +136,7 @@ ggsave("../figures/fig_2_Okanogan_Yakima.pdf", plot = fig_2_Okanogan_Yakima, wid
 fig_2_Okanogan_Yakima
 ```
 
-**The story behind**: Okanogan vs. Yakima gives us a clean hub vs. no-hub story. Both are major fruit&nut counties, and both have clean sales-composition data. The split is on food-hub access: Okanogan has 2 hubs with the nearest just 14.7 miles away, while Yakima although being the the larger, better-known producer has no food hub with its nearest hub 63.6 miles out. Here, the more famous producer actually scores lower on market access. This maybe a good story for USDA.
+**Story behind**: Okanogan vs. Yakima gives us a clean hub vs. no-hub story. Both are major fruit&nut counties, and both have clean sales-composition data. The split is on food-hub access: Okanogan has 2 hubs with the nearest just 14.7 miles away, while Yakima although being the the larger, better-known producer has no food hub with its nearest hub 63.6 miles out. Here, the more famous producer actually scores lower on market access. This maybe a good story for USDA.
 \newpage
 
 
@@ -172,7 +194,7 @@ ggsave("../figures/fig_2_Ventura_Yakima.pdf", plot = fig_2_Ventura_Yakima, width
 fig_2_Ventura_Yakima
 ```
 
-**The story behind**: Compared with Venture, CA, Yakima is much further away from foodhubs' locations. If there are closer foodhubs, the small farmers may have better accessibility to the market.
+**Story behind**: Compared with Venture, CA, Yakima is much further away from foodhubs' locations. If there are closer foodhubs, the small farmers may have better accessibility to the market.
 \newpage
 
 
@@ -226,7 +248,7 @@ fig_2_Monterey_Kern
 ggsave("../figures/fig_2_Monterey_Kern.pdf", plot = fig_2_Monterey_Kern, width = 12, height = 5)
 ```
 
-**The story behind**: Compared with Monterey, CA, Kern,CA is much further away from foodhubs' locations. If there are closer foodhubs, the small farmers may have better accessibility to the market. They're both big fruit&nut producers with similar total farm sales. The food hub gap is also clean: Monterey has 2 hubs, nearest one 31.6 miles, while Kern has zero and its closest is 67.8 miles away.
+**Story behind**: Compared with Monterey, CA, Kern,CA is much further away from foodhubs' locations. If there are closer foodhubs, the small farmers may have better accessibility to the market. They're both big fruit&nut producers with similar total farm sales. The food hub gap is also clean: Monterey has 2 hubs, nearest one 31.6 miles, while Kern has zero and its closest is 67.8 miles away.
 \newpage
 
 
@@ -283,7 +305,7 @@ ggsave("../figures/fig_2_Washington_Benton.pdf", plot = fig_2_Washington_Benton,
 fig_2_Washington_Benton
 ```
 
-**The story behind**: Both are very close in SPMA and Fruit and Nut Share, but it is a good example showing how higher foodhub intermediated share and foodhub location can make up for lower direct to consumer share. 
+**Story behind**: Both are very close in SPMA and Fruit and Nut Share, but it is a good example showing how higher foodhub intermediated share and foodhub location can make up for lower direct to consumer share. 
 \newpage
 
 
@@ -337,7 +359,7 @@ ggsave("../figures/fig_2_Grawford_Camden.pdf", plot = fig_2_Grawford_Camden, wid
 fig_2_Grawford_Camden
 ```
 
-**The story behind*: This can be a good comparison in a state that is less mentioned, and in Geogia, since Crawford has higher foodhub intermediated sale and closer to foodhubs, the effect from foodhub makeup their lower direct to consumer sale share and make them have higher spam than Camden. 
+**Story behind**: This can be a good comparison in a state that is less mentioned, and in Geogia, since Crawford has higher foodhub intermediated sale and closer to foodhubs, the effect from foodhub makeup their lower direct to consumer sale share and make them have higher spam than Camden. 
 \newpage
 
 ### **Franklin, WA vs. Chilton, Alabama**
@@ -390,7 +412,7 @@ ggsave("../figures/fig_2_Franklin_Chilton.pdf", plot = fig_2_Franklin_Chilton, w
 fig_2_Franklin_Chilton
 ```
 
-**The story behind**: Tis story is similar, as Franklin is closer to Foodhub and higher foodhub intermediated sales, it has higher spma even though their direct to consumer sale share is lower. 
+**Story behind**: Tis story is similar, as Franklin is closer to Foodhub and higher foodhub intermediated sales, it has higher spma even though their direct to consumer sale share is lower. 
 \newpage
 
 ### **Greenville County, SC  v.s. Buncombe County, NC**
@@ -443,13 +465,16 @@ ggsave("../figures/fig_2_Greenville_Buncombe.pdf", plot = fig_2_Greenville_Bunco
 
 ```
 
-**The story behind**: This can be a demonstration that how foodhub allow the county has higher fruit nut share have higher market accessibility
+
+**Story behind**: This can be a demonstration that how foodhub allow the county has higher fruit nut share have higher market accessibility
 \newpage
 
 
 ### **Marion County County, FL  v.s. Okeechobee County, FL**
 
 ```{r echo=FALSE, fig.width= 12, fig.height= 5}
+
+showtext::showtext_auto(TRUE)
 
 fig_2_Marion_Okeechobee <- merged_final %>%
   mutate(
@@ -463,37 +488,71 @@ fig_2_Marion_Okeechobee <- merged_final %>%
   ) %>%
   filter(county_fips %in%  c("12083", "12093")) %>%
   select(group = county_name_hub,
-         `Direct To Consumer Share` = direct_to_consumer_share,
-         `Close to Foodhub`= hub_proximity,
-         `Close to Farmer's Market` = d2c,
+         `Direct To \nConsumer Share` = direct_to_consumer_share,
+         `Close to \nFOODHUB`= hub_proximity,
+         `Close to \nFarmer's Market` = d2c,
          `Foodhub Intermediated Share` = foodhub_share,
          `SPMA` = spma,
          `Fruit Nut Share` = fruit_nut_share) %>%
-  ggradar(font.radar = "sans",
+  ggradar(font.radar = "roboto",
           values.radar   = c("0", "50", "100"),
-          group.colours  = c("#861F41", "#E5751F"),
+          group.colours  = c("#3182BD", "#FFD23F"),
           grid.label.size = 5,
-          axis.label.size = 4)+
-  labs(title = "From Orchard to Opportunity: \n Food Hubs and Small Farm Market Access at the County Level") +
-  theme_void() +
+          axis.label.size = 4,
+          axis.label.offset = 1.2,
+          gridline.min.colour = "#BFDBFE",
+          gridline.mid.colour = "#60A5FA",
+          gridline.max.colour = "#1E3A8A") +
+  theme_void(base_family = "body_font") +
+  labs(
+    title = "From Orchard to Opportunity",
+    subtitle = "Food Hubs and Small Farm Market Access at the County Level") +
   theme(
-    plot.title = element_text(
-      face = "bold",
-      hjust = 0.5,        # 0 = left, 0.5 = center, 1 = right
-      size = 12,          # default is ~13.2 for titles; go smaller as needed
-      family = "sans"     # generic sans-serif (Arial/Helvetica depending on OS)
+    plot.background = element_rect(
+      fill = "#FAF8F2",
+      color = NA
     ),
-    plot.subtitle   = element_text(size = 11, color = "grey30",
-                                   margin = margin(b = 10)),
-    plot.caption    = element_text(size = 8, color = "grey40", hjust = 0),
+    panel.background = element_rect(
+      fill = "#FAF8F2",
+      color = NA
+    ),
+
+    plot.title = element_text(
+      family = "title_font",
+      size = 25,
+      lineheight = 0.88,
+      color = "#123B65",
+      face = "plain",
+      hjust = 0,
+      margin = margin(b = 10)
+    ),
+
+    plot.subtitle = element_text(
+      family = "body_font",
+      size = 10,
+      lineheight = 1.2,
+      color = "#4B5D6D",
+      hjust = 0,
+      margin = margin(b = 12)
+    ),
+
     legend.position = "bottom",
-    legend.title    = element_text(size = 9),
-    legend.text     = element_text(size = 8),
-    plot.margin     = margin(20, 120, 20, 120)
-  ) + coord_equal(clip = "off")
+    legend.direction = "horizontal",
+    legend.key.width = unit(2.5, "cm"),
+    legend.key.height = unit(0.28, "cm"),
+
+    plot.margin = margin(
+  t = 10,
+  r = 10,
+  b = 10,
+  l = 10
+)
+) + coord_equal(clip = "off")
 
 fig_2_Marion_Okeechobee
 ggsave("../figures/fig_2_Marion_Okeechobee.pdf", plot = fig_2_Marion_Okeechobee, width = 12, height = 5)
 
 ```
-**The story behind**: We can imagine if Okeechobee is closer to foodhub, the farmers there will have higher accessibility to the market.
+
+
+**Story behind**: We can imagine if Okeechobee is closer to foodhub, the farmers there will have higher accessibility to the market.
