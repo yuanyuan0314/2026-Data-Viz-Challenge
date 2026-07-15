@@ -35,18 +35,63 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 
 Load the library
 ```{r}
-library(readr)
+# to install the packages
+
+# install.packages(packages <- c(
+#   "sf",
+#   "dplyr",
+#   "ggplot2",
+#   "tidyr",
+#   "purrr",
+#   "ggplot2",
+#   "scales",
+#   "tidycensus"
+# )
+# )
+# 
+# install.packages(c("showtext", "sysfonts"))
+
+install.packages("rsvg")
+library(rsvg)
+
+library(showtext)
+library(sysfonts)
+
+install.packages("ggimage")
+library(ggimage)
+
+
+library(showtext)
+library(sysfonts)
+
+```
+
+```{r}
+library(sf)
 library(dplyr)
+library(tidyr)
+library(purrr)
+library(scales)
+library(terra)
+library(rayshader)
+library(rayrender)
+library(rayvertex)
+library(rgl)
+library(tidycensus)
+library(magick)
+library(readr)
 library(sf)
 library(tigris)
-library(ggplot2)
 library(readxl)
 library(ggnewscale)
 library(ggtext) # adjust the text style in the ggplot
 
-# To install rayshader
-# link to the package https://www.rayshader.com/
-library(rayshader)
+library(showtext)
+library(sysfonts)
+
+library(ggplot2)
+library(patchwork)
+
 ```
 
 ### Step 1 — read the merged county table
@@ -145,6 +190,32 @@ crop_lu <- tibble::tribble(
   "Texas",          "🍈"
 )
 ```
+
+```{r}
+svg_files <- list.files(
+  "../assets/svg",
+  pattern = "\\.svg$",
+  full.names = TRUE
+)
+
+dir.create("../assets/png", showWarnings = FALSE, recursive = TRUE)
+
+for (svg_file in svg_files) {
+
+  png_file <- file.path(
+    "../assets/png",
+    paste0(tools::file_path_sans_ext(basename(svg_file)), ".png")
+  )
+
+  rsvg_png(
+    svg = svg_file,
+    file = png_file,
+    width = 1024,
+    height = 1024
+  )
+}
+```
+
 ### Step 5 — US county choropleth
 ```{r}
 # lower-48 + DC county polygons (drop AK/HI/territories)
@@ -165,93 +236,325 @@ crop_pts <- states_sf %>%
 map_df <- counties_sf %>%
   left_join(spma_index, by = "county_fips")
 
-p <- ggplot(map_df) +
-  geom_sf(aes(fill = SPMA_0_100), color = NA) +
-  geom_sf(data = states_sf, fill = NA, color = "grey30", linewidth = 0.2) +
-  geom_sf(data = hubs_pts, shape = 21, fill = "yellow",
-          color = "grey50", size = 1.2, stroke = 0.25, alpha = 0.5) +
-  scale_fill_distiller(
-    palette   = "Blues",
-    direction = 1,
-    limits    = c(0, clip_hi),
-    oob       = scales::squish,
-    labels    = scales::label_number(accuracy = 1),
-    na.value  = "grey90",
-    name      = "SPMA\n(0-100)"
-  ) +
-  coord_sf(crs = 5070) +
-  geom_sf_text(data = crop_pts, aes(label = icon), size = 7) +
-  labs(
-    title    = "Small-Producer Market Access (SPMA) index by county",
-    subtitle = "Higher = better weighted access to farmers markets & food hubs",
-    caption = paste0(
-  "Grey polygons = no data (", n_na, " counties). Color scale clipped at ",
-  round(clip_hi), "; counties above are shown at the darkest shade.\n",
-  "Yellow dots = food hub locations. Fruit icons mark leading fruit/nut states ",
-  "(USDA ERS, Fruit and Tree Nuts Outlook, FTS-384, March 2026); illustrative, not to scale.")
-  ) +
-  theme_void(base_size = 12) +
-  theme(
-    plot.background  = element_rect(fill = "white", color = NA),
-    panel.background = element_rect(fill = "white", color = NA),
-    plot.title    = element_text(face = "bold"),
-    plot.subtitle = element_text(color = "grey35"),
-    plot.caption  = element_text(size = 8, color = "grey55", hjust = 0),
-    legend.position = c(0.92, 0.25)
+crop_pts <- crop_pts %>% 
+  mutate(
+    image = case_when(
+      NAME == "California"     ~ "../assets/png/grapes.png",
+      NAME == "Georgia"        ~ "../assets/png/peach.png",
+      NAME == "South Carolina" ~ "../assets/png/peach.png",
+      NAME == "Michigan"       ~ "../assets/png/cherry.png",
+      NAME == "Florida"        ~ "../assets/png/orange.png",
+      NAME == "Maine"          ~ "../assets/png/blueberry.png",
+      NAME == "Washington"     ~ "../assets/png/apple.png",
+      NAME == "Texas"          ~ "../assets/png/melon.png",
+      NAME == "Wisconsin"      ~ "../assets/png/blueberry.png",
+      NAME == "Oregon"         ~ "../assets/png/pear.png",
+      TRUE                     ~ NA_character_
+    )
   )
 
-# 1. we set the minimum to be floor of the 3D map
-floor_val <- min(map_df$SPMA_0_100, na.rm = TRUE)
-
-# 2. this makes the height match the color clipping
-map_df$SPMA_plot <- pmin(map_df$SPMA_0_100, clip_hi)
-
-p3d <- p +
-  scale_fill_gradientn(
-  colors = c("white", "#c6dbef", "#4292c6", "#08306b"),
-  values = scales::rescale(c(0, 0.35, 0.7, 1)),
-  limits = c(floor_val, clip_hi),
-  oob    = scales::squish,
-  labels = scales::label_number(accuracy = 1),
-  na.value = "grey90",
-  name   = "SPMA\n(0-100)"
-)+
-  theme(
-    legend.position = "right",         
-    plot.caption = element_blank()     
-  )
-
-#Takes a ggplot2 object (or a list of two ggplot2 objects) and uses the fill or color aesthetic to transform the plot into a 3D surface. 
-plot_gg(
-  p3d,
-  multicore  = TRUE,
-  width      = 9,  height = 5.5,   # match the wide US-map aspect ratio
-  scale      = 80,                # vertical exaggeration — tune 150–350
-  height_aes = "fill",             # extrude from the fill variable
-  raytrace   = TRUE,
-  windowsize = c(1400, 900),
-  zoom       = 0.7,
-  phi        = 40,                 # camera elevation
-  theta      = 0,                  # facing north-up
-  sunangle   = 315,
-  shadow_intensity = 0.5
-)
-
-
-# After plot_gg() has the scene open, adjust the camera without re-rendering
-# This will give us a static plot
-render_camera(
-  phi   = 65,     # 90 = straight down, 40 = your current dramatic tilt
-  theta = 0,      # north stays up, no rotation
-  zoom  = 0.55,
-  fov   = 0       # 0 = orthographic — no perspective distortion, best for papers
-)
-
-# make the snapshot of the plot
-render_snapshot("spma_3d_static.png",
-                software_render = TRUE,
-                width = 3000, height = 1900)
+crop_icon_df <- crop_pts %>% 
+  mutate(
+    x = sf::st_coordinates(.)[, 1],
+    y = sf::st_coordinates(.)[, 2]
+  ) %>% 
+  sf::st_drop_geometry()
 ```
+
+
+```{r, fig.width= 12, fig.height= 5}
+
+font_add_google(
+  name = "DM Serif Display",
+  family = "title_font"
+)
+
+font_add_google(
+  name = "DM Sans",
+  family = "body_font"
+)
+
+showtext::showtext_auto(TRUE)
+
+fig_01c_annotated <- ggplot(map_df) +
+  geom_sf(aes(fill = SPMA_0_100), color = NA) + 
+  geom_sf(data = state_outlines, fill = NA, color = "grey55", linewidth = 0.25) + 
+  geom_sf(data = hubs_pts, shape = 21, fill = "#FFD23F",
+          color = "grey50", size = 1.2, stroke = 0.25, alpha = 0.5) +
+  scale_fill_gradientn(
+    colours = c(
+      "#EAF4FF",
+      "#C6DBEF",
+      "#9ECAE1",
+      "#6BAED6",
+      "#3182BD",
+      "#08519C"
+    ),
+    limits = c(0, 100),
+    oob = scales::squish,
+    na.value = "#F0F0EC",
+    name = NULL
+  )  + 
+  coord_sf(crs = 5070) +
+  ggimage::geom_image(
+  data = crop_icon_df,
+  aes(
+    x = x,
+    y = y,
+    image = image
+  ),
+  size = 0.09,
+  asp = 1,
+  inherit.aes = FALSE) +
+  theme_void(base_family = "body_font") +
+  labs(
+    title = "Small-Producers' Market Accessibility(SPMA)",
+    subtitle = paste0(
+      "How market access connects fruit and tree nut producers ",
+      "to consumers and food hubs"
+    )
+  ) +
+  theme(
+    plot.background = element_rect(
+      fill = "#FAF8F2",
+      color = NA
+    ),
+    panel.background = element_rect(
+      fill = "#FAF8F2",
+      color = NA
+    ),
+
+    plot.title = element_text(
+      family = "title_font",
+      size = 25,
+      lineheight = 0.88,
+      color = "#123B65",
+      face = "plain",
+      hjust = 0,
+      margin = margin(b = 1)
+    ),
+
+    plot.subtitle = element_text(
+      family = "body_font",
+      size = 12,
+      lineheight = 1.2,
+      color = "#4B5D6D",
+      hjust = 0,
+      margin = margin(b = 10)
+    ),
+
+    legend.position = "bottom",
+    legend.direction = "horizontal",
+    legend.key.width = unit(2.5, "cm"),
+    legend.key.height = unit(0.28, "cm"),
+
+    plot.margin = margin(
+  t = 10,
+  r = 10,
+  b = 10,
+  l = 10
+)
+  )
+
+
+ggsave("../figures/fig_01c.pdf", plot = fig_01c_annotated, width = 12, height = 5)
+fig_01c_annotated
+
+
+```
+
+To add the note panel 
+
+```{r}
+library(ggtext)
+
+notes_panel <- ggplot() +
+  annotate(
+    "text",
+    x = 0,
+    y = 0.92,
+    label = "Food hubs expand market access",
+    hjust = 0,
+    vjust = 1,
+    family = "body_font",
+    fontface = "bold",
+    size = 5.2,
+    color = "#123B65"
+  ) +
+  annotate(
+    "text",
+    x = 0,
+    y = 0.82,
+    label = paste0(
+      "Counties closer to food hubs tend to have\n",
+      "stronger access to markets and buyers.\n",
+      "Yellow dots identify food hub locations."
+    ),
+    hjust = 0,
+    vjust = 1,
+    family = "body_font",
+    size = 4,
+    lineheight = 1.15,
+    color = "#4B5D6D"
+  ) +
+  annotate(
+    "segment",
+    x = -0.06,
+    xend = -0.06,
+    y = 0.75,
+    yend = 0.96,
+    linewidth = 1.4,
+    color = "#FFD23F"
+  ) +
+  annotate(
+    "text",
+    x = 0,
+    y = 0.58,
+    label = "Accessibility is multidimensional",
+    hjust = 0,
+    vjust = 1,
+    family = "body_font",
+    fontface = "bold",
+    size = 5.2,
+    color = "#123B65"
+  ) +
+  annotate(
+    "text",
+    x = 0,
+    y = 0.48,
+    label = paste0(
+      "The SPMA combines direct-to-consumer access,\n",
+      "food-hub connections, and market proximity.\n",
+      "Darker blue represents higher accessibility."
+    ),
+    hjust = 0,
+    vjust = 1,
+    family = "body_font",
+    size = 4,
+    lineheight = 1.15,
+    color = "#4B5D6D"
+  ) +
+  annotate(
+    "segment",
+    x = -0.06,
+    xend = -0.06,
+    y = 0.41,
+    yend = 0.62,
+    linewidth = 1.4,
+    color = "#3182BD"
+  ) +
+  coord_cartesian(
+    xlim = c(-0.1, 1),
+    ylim = c(0, 1),
+    clip = "off"
+  ) +
+  theme_void() +
+  theme(
+    plot.background = element_rect(
+      fill = "#FAF8F2",
+      color = NA
+    )
+  )
+
+rural_note <- ggplot() +
+  annotate(
+    "segment",
+    x = 0.02,
+    xend = 0.02,
+    y = 0.12,
+    yend = 0.88,
+    linewidth = 1.5,
+    color = "#A7B6C5"
+  ) +
+  annotate(
+    "text",
+    x = 0.07,
+    y = 0.84,
+    label = "Why are values missing in the central U.S.?",
+    hjust = 0,
+    vjust = 1,
+    family = "body_font",
+    fontface = "bold",
+    size = 4,
+    color = "#123B65"
+  ) +
+  annotate(
+    "text",
+    x = 0.07,
+    y = 0.62,
+    label = paste0(
+      "Missing SPMA values mainly reflect unavailable or suppressed sales data.\n",
+      "These gaps are more common in rural counties and places with fewer fruit\n",
+      "and tree nut farms."
+    ),
+    hjust = 0,
+    vjust = 1,
+    family = "body_font",
+    size = 3,
+    lineheight = 1.15,
+    color = "#4B5D6D"
+  ) +
+  coord_cartesian(
+    xlim = c(0, 1),
+    ylim = c(0, 1),
+    clip = "off"
+  ) +
+  theme_void() +
+  theme(
+    plot.background = element_rect(
+      fill = "#FAF8F2",
+      color = NA
+    ),
+    plot.margin = margin(5, 10, 5, 20)
+  )
+
+left_column <- fig_01c_annotated / rural_note +
+  plot_layout(
+    heights = c(4.5, 1)
+  )
+
+
+final_layout <- (left_column | notes_panel) +
+  patchwork::plot_layout(
+    ncol = 2,
+    widths = c(3.2, 1.25)
+  ) +
+  plot_annotation(
+    theme = theme(
+      plot.background = element_rect(
+        fill = "#FAF8F2",
+        color = NA
+      ),
+      plot.title = element_text(
+        family = "title_font",
+        size = 34,
+        lineheight = 0.88,
+        color = "#123B65",
+        hjust = 0,
+        margin = margin(b = 12)
+      ),
+      plot.subtitle = element_text(
+        family = "body_font",
+        size = 14,
+        color = "#4B5D6D",
+        hjust = 0,
+        margin = margin(b = 18)
+      ),
+      plot.margin = margin(
+        t = 30,
+        r = 35,
+        b = 25,
+        l = 35
+      )
+    )
+  )
+
+final_layout
+
+ggsave("../figures/fig_01c.pdf", plot = final_layout, width = 18, height = 8)
+
+```
+
 
 ### Step 6 — save
 ```{r}
