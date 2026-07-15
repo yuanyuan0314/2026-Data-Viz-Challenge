@@ -1,0 +1,279 @@
+---
+title: "Figure 02: County Level Comparison"
+author: "Pragati Dahal"
+date: "2026-07-12"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(
+  warning = FALSE,   # hides warnings
+  message = FALSE,   # hides package startup messages, etc.
+  echo = FALSE
+)
+```
+
+## Purpose 
+1. the purpose of this file is to geneat the county comparison plot 
+2. the county comparison plot will compare the differnce in spma and different 
+ composition 
+
+### Note 
+\begin{itemize}
+  \item The index and the factors represented in the spider graph are percentile
+  \item Since local intermediate sale percentage has a lot of missing values, this county comparison use $(1-(\text{direct to consumer sales' share}))$ as the the estimation of the food hub intermediated sale 
+\end{itemize}
+```{r include=FALSE}
+library(tigris)    # downloads Census TIGER shapefiles (county boundaries)
+library(sf)        # the workhorse: stores and manipulates spatial data
+library(dplyr)     # regular data wrangling once things look like data frames
+
+library(ggplot2)
+library(mapview)
+library(readxl)
+library(readr)
+library(units)
+
+library(tidycensus)
+#to make the spider plot
+library(scales)
+
+#devtools::install_github("ricardo-bion/ggradar")
+library(ggradar)
+
+```
+
+```{r include=FALSE}
+# add the statename, we load the statename from the tidycensus first
+state_lookup <- fips_codes %>% 
+  distinct(state_code, state_name)
+  
+merged_final <- read_csv("../data/outcome/merged_final_xz.csv") %>% 
+  select(county_name_hub, county_fips, spma, direct_to_consumer, foodhub_inter, distance_nearest_hub_mile, all_sales, distance_nearest_farmersmarket_mile, all_sales, d2c_sales_pct, foodhub_share, share) %>% 
+  rename(fruit_nut_share = share) %>% 
+  arrange(fruit_nut_share) %>% 
+  filter(county_fips != "22087",
+         !is.na(fruit_nut_share)) %>% 
+  mutate(state_code = substr(county_fips,1, 2)) %>% 
+  left_join(state_lookup, by = "state_code") %>% 
+  mutate(county_name_hub = paste0(county_name_hub,", ", state_name))
+
+
+```
+\newpage
+## County Comparison
+
+### **Okanogan, Washington v.s. Yakima, Washington **
+
+```{r echo=FALSE, fig.width= 12, fig.height= 5}
+
+fig_2_Okanogan_Yakima <- merged_final %>%
+  mutate(
+    direct_to_consumer_share        = percent_rank(d2c_sales_pct),
+    d2c = percent_rank(-distance_nearest_farmersmarket_mile),
+    foodhub_inter             = percent_rank(foodhub_inter),
+    hub_proximity             = percent_rank(-distance_nearest_hub_mile),
+    foodhub_share = percent_rank(foodhub_share),
+    spma = percent_rank(spma),
+    fruit_nut_share = percent_rank(fruit_nut_share)
+  ) %>%
+  filter(county_fips %in%  c("53047", "53077")) %>%
+  select(group = county_name_hub,
+         `Direct To Consumer Share` = direct_to_consumer_share,
+         `Close to Foodhub`= hub_proximity,
+         `Close to Farmer's Market` = d2c,
+         `Foodhub Intermediated Share` = foodhub_share,
+         `SPMA` = spma,
+         `Fruit Nut Share` = fruit_nut_share) %>%
+  ggradar(font.radar = "sans",
+          values.radar   = c("0", "50", "100"),
+          group.colours  = c("#861F41", "#E5751F"),
+          grid.label.size = 5,
+          axis.label.size = 4)+
+  labs(title = "From Orchard to Opportunity: \n Food Hubs and Small Farm Market Access at the County Level") +
+  theme_void() +
+  theme(
+    plot.title = element_text(
+      face = "bold",
+      hjust = 0.5,        # 0 = left, 0.5 = center, 1 = right
+      size = 12,          # default is ~13.2 for titles; go smaller as needed
+      family = "sans"     # generic sans-serif (Arial/Helvetica depending on OS)
+    ),
+    plot.subtitle   = element_text(size = 11, color = "grey30",
+                                   margin = margin(b = 10)),
+    plot.caption    = element_text(size = 8, color = "grey40", hjust = 0),
+    legend.position = "bottom",
+    legend.title    = element_text(size = 9),
+    legend.text     = element_text(size = 8),
+    plot.margin     = margin(20, 120, 20, 120)
+  ) + coord_equal(clip = "off")
+
+ggsave("../figures/fig_2_Okanogan_Yakima.pdf", plot = fig_2_Okanogan_Yakima, width = 12, height = 5)
+
+fig_2_Okanogan_Yakima
+```
+
+**The story behind**: Okanogan and Yakima are both major Washington fruit and nut counties, but only one of them can reach a food hub. Okanogan has two, the nearest 14.7 miles away. Yakima has none, its nearest food hub is Gorge Grown Food Network in Hood River, Oregon (63.6 miles). Yakima is the larger and far better known producer, and it still scores lower on market access. Being a famous growing region does not make a county well connected to the buyers its small farms depend on.
+\newpage
+
+
+### **Washington, Akansas v.s. Benton, Arkansas **
+
+```{r echo=FALSE, fig.width= 12, fig.height= 5}
+
+fig_2_Washington_Benton <- merged_final %>%
+  mutate(
+    direct_to_consumer_share        = percent_rank(d2c_sales_pct),
+    d2c = percent_rank(-distance_nearest_farmersmarket_mile),
+    foodhub_inter             = percent_rank(foodhub_inter),
+    hub_proximity             = percent_rank(-distance_nearest_hub_mile),
+    foodhub_share = percent_rank(foodhub_share),
+    spma = percent_rank(spma),
+    fruit_nut_share = percent_rank(fruit_nut_share)
+  ) %>%
+  filter(county_fips %in%  c("05143", "05007")) %>%
+  select(group = county_name_hub,
+         `Direct To Consumer Share` = direct_to_consumer_share,
+         `Close to Foodhub`= hub_proximity,
+         `Close to Farmer's Market` = d2c,
+         `Foodhub Intermediated Share` = foodhub_share,
+         `SPMA` = spma,
+         `Fruit Nut Share` = fruit_nut_share) %>%
+  ggradar(font.radar = "sans",
+          values.radar   = c("0", "50", "100"),
+          group.colours  = c("#861F41", "#E5751F"),
+          grid.label.size = 5,
+          axis.label.size = 4)+
+  labs(title = "From Orchard to Opportunity: \n Food Hubs and Small Farm Market Access at the County Level") +
+  theme_void() +
+  theme(
+    plot.title = element_text(
+      face = "bold",
+      hjust = 0.5,        # 0 = left, 0.5 = center, 1 = right
+      size = 12,          # default is ~13.2 for titles; go smaller as needed
+      family = "sans"     # generic sans-serif (Arial/Helvetica depending on OS)
+    ),
+    plot.subtitle   = element_text(size = 11, color = "grey30",
+                                   margin = margin(b = 10)),
+    plot.caption    = element_text(size = 8, color = "grey40", hjust = 0),
+    legend.position = "bottom",
+    legend.title    = element_text(size = 9),
+    legend.text     = element_text(size = 8),
+    plot.margin     = margin(20, 120, 20, 120)
+  ) + coord_equal(clip = "off")
+
+ggsave("../figures/fig_2_Washington_Benton.pdf", plot = fig_2_Washington_Benton, width = 12, height = 5)
+
+fig_2_Washington_Benton
+```
+
+**The story behind**: These two adjacent Arkansas counties land almost on top of each other across every dimension of the index. They have the same production profile, the same distances, the same accessibility. That similarity is the point. Neighboring counties with shared infrastructure and shared markets should score alike, and they do. Where the index separates counties elsewhere in this figure, it is registering real differences in the food environment rather than noise.
+
+\newpage
+
+### **Yolo, CA v.s. Yakima, WA**
+
+```{r echo=FALSE, fig.width= 12, fig.height= 5}
+
+fig_2_Yolo_Yakima <- merged_final %>%
+  mutate(
+    direct_to_consumer_share  = percent_rank(d2c_sales_pct),
+    d2c                       = percent_rank(-distance_nearest_farmersmarket_mile),
+    foodhub_inter             = percent_rank(foodhub_inter),
+    hub_proximity             = percent_rank(-distance_nearest_hub_mile),
+    foodhub_share             = percent_rank(foodhub_share),
+    spma                      = percent_rank(spma),
+    fruit_nut_share           = percent_rank(fruit_nut_share)
+  ) %>%
+  filter(county_fips %in%  c("06113", "53077")) %>%
+  select(group = county_name_hub,
+         `Direct To Consumer Share` = direct_to_consumer_share,
+         `Close to Foodhub`= hub_proximity,
+         `Close to Farmer's Market` = d2c,
+         `Foodhub Intermediated Share` = foodhub_share,
+         `SPMA` = spma,
+         `Fruit Nut Share` = fruit_nut_share) %>%
+  ggradar(font.radar = "sans",
+          values.radar   = c("0", "50", "100"),
+          group.colours  = c("#861F41", "#E5751F"),
+          grid.label.size = 5,
+          axis.label.size = 4)+
+  labs(title = "From Orchard to Opportunity: \n Food Hubs and Small Farm Market Access at the County Level") +
+  theme_void() +
+  theme(
+    plot.title = element_text(
+      face = "bold",
+      hjust = 0.5,
+      size = 12,
+      family = "sans"
+    ),
+    plot.subtitle   = element_text(size = 11, color = "grey30",
+                                   margin = margin(b = 10)),
+    plot.caption    = element_text(size = 8, color = "grey40", hjust = 0),
+    legend.position = "bottom",
+    legend.title    = element_text(size = 9),
+    legend.text     = element_text(size = 8),
+    plot.margin     = margin(20, 120, 20, 120)
+  ) + coord_equal(clip = "off")
+
+ggsave("../figures/fig_2_Yolo_Yakima.pdf", plot = fig_2_Yolo_Yakima, width = 12, height = 5)
+
+fig_2_Yolo_Yakima
+```
+
+**The story behind**: Yakima is one of the country's best-known fruit counties, and Yolo is not. Yet Yolo sits in the 98th SPMA percentile against Yakima's 80th, roughly a thirty-fold gap in the index. The reason is not what these counties grow but what sits next to them. Yolo's farmers reach the Capay Valley Farm Shop in 6.1 miles which is an in-county hub moving thirteen categories of product, including fresh fruit and nuts. Yakima has no food hub at all; Yakima has none, its nearest food hub is Gorge Grown Food Network in Hood River, Oregon (63.6 miles).
+
+\newpage
+
+### **Greenville, SC v.s. Lee, GA**
+
+```{r echo=FALSE, fig.width= 12, fig.height= 5}
+
+fig_2_Greenville_Lee <- merged_final %>%
+  mutate(
+    direct_to_consumer_share  = percent_rank(d2c_sales_pct),
+    d2c                       = percent_rank(-distance_nearest_farmersmarket_mile),
+    foodhub_inter             = percent_rank(foodhub_inter),
+    hub_proximity             = percent_rank(-distance_nearest_hub_mile),
+    foodhub_share             = percent_rank(foodhub_share),
+    spma                      = percent_rank(spma),
+    fruit_nut_share           = percent_rank(fruit_nut_share)
+  ) %>%
+  filter(county_fips %in%  c("45045", "13177")) %>%
+  select(group = county_name_hub,
+         `Direct To Consumer Share` = direct_to_consumer_share,
+         `Close to Foodhub`= hub_proximity,
+         `Close to Farmer's Market` = d2c,
+         `Foodhub Intermediated Share` = foodhub_share,
+         `SPMA` = spma,
+         `Fruit Nut Share` = fruit_nut_share) %>%
+  ggradar(font.radar = "sans",
+          values.radar   = c("0", "50", "100"),
+          group.colours  = c("#861F41", "#E5751F"),
+          grid.label.size = 5,
+          axis.label.size = 4)+
+  labs(title = "From Orchard to Opportunity: \n Food Hubs and Small Farm Market Access at the County Level") +
+  theme_void() +
+  theme(
+    plot.title = element_text(
+      face = "bold",
+      hjust = 0.5,
+      size = 12,
+      family = "sans"
+    ),
+    plot.subtitle   = element_text(size = 11, color = "grey30",
+                                   margin = margin(b = 10)),
+    plot.caption    = element_text(size = 8, color = "grey40", hjust = 0),
+    legend.position = "bottom",
+    legend.title    = element_text(size = 9),
+    legend.text     = element_text(size = 8),
+    plot.margin     = margin(20, 120, 20, 120)
+  ) + coord_equal(clip = "off")
+
+ggsave("../figures/fig_2_Greenville_Lee.pdf", plot = fig_2_Greenville_Lee, width = 12, height = 5)
+
+fig_2_Greenville_Lee
+```
+
+**The story behind**: Greenville's producers reach Swamp Rabbit Cafe & Grocery in 3.3 miles, an in-county hub carrying fourteen categories of product, with three hubs within reach overall. Lee's nearest hub is the Middle Georgia Growers Cooperative, 78 miles away. Greenville sits in the 97th SPMA percentile, Lee in the 21st. Two counties in the same southeastern growing region, and a twenty-fold difference in what the index measures, it is not because of what they produce, but because of what has been built near them.

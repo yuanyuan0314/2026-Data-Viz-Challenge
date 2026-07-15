@@ -1,0 +1,214 @@
+---
+title: "an_01a_spma_index"
+author: "Yuanyuan Wen, Pragati Dahal"
+date: "2026-07-13"
+output: html_document
+---
+## Purpose
+
+Compute the Small-Producer Market Access (SPMA) index for every county from
+`distance_SPMA_merged.csv`, then map it as a US county choropleth.
+
+## The SPMA index
+
+For county \(i\), let
+
+- \(d^{\text{FM}}_i\) = distance from the county centroid to the nearest **farmers market** (miles),
+- \(d^{\text{hub}}_i\) = distance from the county centroid to the nearest **food hub** (miles),
+
+and define the three sales pieces from the county's total sales `all_sales`:
+
+$$
+\text{DTC}_i = \text{all_sales}_i \times \text{d2c_sales_pct}_i/100,\qquad
+\text{Int}_i = \text{all_sales}_i \times \text{intermediated_sales_pct}_i/100 .
+$$
+
+Then
+
+$$
+\text{SPMA}_i =
+\dfrac{\text{DTC}_i}{\left(d^{\text{FM}}_i\right)^2} \;+\; \dfrac{\text{Int}_i}{\left(d^{\text{hub}}_i\right)^2}
+$$
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+Load the library
+```{r}
+library(readr)
+library(dplyr)
+library(sf)
+library(tigris)
+library(ggplot2)
+library(readxl)
+library(ggnewscale)
+options(tigris_use_cache = TRUE)
+```
+
+### Step 1 — read the merged county table
+```{r}
+dat <- read_csv("../data/outcome/distance_SPMA_merged.csv") %>%
+  mutate(county_fips = sprintf("%05d", as.integer(county_fips)))
+```
+
+
+### Step 2 — derive intermediated sales share from DTC share
+`d2c_sales_pct` and `all_sales` have the fewest missing values of any of the sales
+variables, so rather than relying on the sparser `intermediated_sales_pct` column
+directly, we back it out as the complement of DTC: `1 - d2c_sales_pct`. 
+Two observations have `d2c_sales_pct`>100 (James City, VA and Rockdale, GA) and are assigned NA.
+```{r}
+dat <- dat %>%
+  mutate(
+    intermediated_sales_pct_derived = if_else(
+      d2c_sales_pct > 100,
+      NA,
+      100 - d2c_sales_pct
+    )
+  )
+```
+
+### Step 3 — compute the SPMA index
+```{r}
+spma_index <- dat %>%
+  mutate(
+    
+    has_hub  = !is.na(number_foodhub) & number_foodhub > 0,
+    dtc_sales          = all_sales * d2c_sales_pct/100,
+    interm_sales       = all_sales * intermediated_sales_pct_derived/100,
+    SPMA = dtc_sales / (distance_nearest_farmersmarket_mile^2) +
+           interm_sales  / (distance_nearest_hub_mile^2)
+  )
+
+# quick look
+spma_index %>%
+  summarise(n = n(),
+            n_with_hub = sum(has_hub, na.rm = TRUE),
+            spma_na = sum(is.na(SPMA)),
+            spma_min = min(SPMA, na.rm = TRUE),
+            spma_median = median(SPMA, na.rm = TRUE),
+            spma_max = max(SPMA, na.rm = TRUE))
+```
+
+### Step 4 — Log & Rescale the index to 0-100
+```{r}
+rescale_0_100 <- function(x) {
+  (x - min(x, na.rm = TRUE)) / (max(x, na.rm = TRUE) - min(x, na.rm = TRUE)) * 100
+}
+
+spma_index$SPMA_log   <- log(spma_index$SPMA + 1)   # avoid log(0)
+spma_index$SPMA_0_100 <- rescale_0_100(spma_index$SPMA_log)
+
+# clip point for the color scale (95th pct); reported in the caption
+clip_hi <- as.numeric(quantile(spma_index$SPMA_0_100, 0.95, na.rm = TRUE))
+n_na    <- sum(is.na(spma_index$SPMA_0_100))
+```
+
+### Step 4b - Food hub location
+```{r}
+drop_fp <- c("02", "15", "60", "66", "69", "72", "78")
+
+foodhub_raw <- read_excel("../data/source/foodhub_2026-75161420.xlsx")
+
+foodhub_directory <- foodhub_raw %>%
+  select(listing_id, listing_name, location_x, location_y, products) %>%
+  rename(lon = location_x, lat = location_y) %>%
+  mutate(lon = as.numeric(lon),
+         lat = as.numeric(lat)) %>%
+  filter(!is.na(lon), !is.na(lat))
+
+hubs_sf <- st_as_sf(foodhub_directory, coords = c("lon", "lat"), crs = 4326)
+
+county_lookup <- counties(cb = TRUE, year = 2023, progress_bar = FALSE) %>%
+  select(STATEFP, GEOID, county_name = NAME) %>%
+  st_transform(4326)
+
+hubs_pts <- st_join(hubs_sf, county_lookup, join = st_within) %>%
+  filter(!STATEFP %in% drop_fp) %>%
+  st_transform(5070)
+
+crop_lu <- tibble::tribble(
+  ~NAME,            ~icon,
+  "Washington",     "🍎",
+  "Oregon",         "🍐",
+  "California",     "🍇",
+  "Wisconsin",      "🫐",
+  "Michigan",       "🍒",
+  "Maine",          "🫐",
+  "Florida",        "🍊",
+  "Georgia",        "🍑",
+  "South Carolina", "🍑",
+  "Texas",          "🍈"
+)
+```
+### Step 5 — US county choropleth
+```{r}
+# lower-48 + DC county polygons (drop AK/HI/territories)
+counties_sf <- counties(cb = TRUE, year = 2023, progress_bar = FALSE) %>%
+  filter(!STATEFP %in% drop_fp) %>%
+  transmute(county_fips = GEOID) %>%
+  st_transform(5070)
+
+states_sf <- states(cb = TRUE, year = 2023, progress_bar = FALSE) %>%
+  filter(!STATEFP %in% drop_fp) %>%
+  select(NAME) %>%
+  st_transform(5070)
+
+crop_pts <- states_sf %>%
+  inner_join(crop_lu, by = "NAME") %>%
+  st_point_on_surface()
+
+map_df <- counties_sf %>%
+  left_join(spma_index, by = "county_fips")
+
+p <- ggplot(map_df) +
+  geom_sf(aes(fill = SPMA_0_100), color = NA) +
+  geom_sf(data = states_sf, fill = NA, color = "grey30", linewidth = 0.2) +
+  geom_sf(data = hubs_pts, shape = 21, fill = "pink",
+          color = "grey50", size = 1.2, stroke = 0.25, alpha = 0.5) +
+  scale_fill_distiller(
+    palette   = "Blues",
+    direction = 1,
+    limits    = c(0, clip_hi),
+    oob       = scales::squish,
+    labels    = scales::label_number(accuracy = 1),
+    na.value  = "grey90",
+    name      = "SPMA\n(0-100)"
+  ) +
+  coord_sf(crs = 5070) +
+  geom_sf_text(data = crop_pts, aes(label = icon), size = 7) +
+  labs(
+    title    = "Small-Producer Market Access (SPMA) index by county",
+    subtitle = "Higher = better weighted access to farmers markets & food hubs",
+    caption = paste0(
+  "Grey polygons = no data (", n_na, " counties). Color scale clipped at ",
+  round(clip_hi), "; counties above are shown at the darkest shade.\n",
+  "Pink dots = food hub locations. Fruit icons mark leading fruit/nut states ",
+  "(USDA ERS, Fruit and Tree Nuts Outlook, FTS-384, March 2026); illustrative, not to scale.")
+  ) +
+  theme_void(base_size = 12) +
+  theme(
+    plot.background  = element_rect(fill = "white", color = NA),
+    panel.background = element_rect(fill = "white", color = NA),
+    plot.title    = element_text(face = "bold"),
+    plot.subtitle = element_text(color = "grey35"),
+    plot.caption  = element_text(size = 8, color = "grey55", hjust = 0),
+    legend.position = c(0.92, 0.25)
+  )
+p
+```
+
+### Step 6 — save
+```{r}
+dir.create("../figures", showWarnings = FALSE)
+ggsave("../figures/spma_choropleth.png", p, width = 11, height = 7, dpi = 150,
+       device = ragg::agg_png)
+spma_index %>%
+  select(county_fips, state, county_name = county_name_hub,
+         distance_nearest_farmersmarket_mile, distance_nearest_hub_mile,
+         number_foodhub, has_hub, all_sales,
+         d2c_sales_pct, local_sales_pct, intermediated_sales_pct_derived,
+         SPMA, SPMA_0_100) %>%
+  write.csv("../data/outcome/spma_index.csv", row.names = FALSE)
+```
