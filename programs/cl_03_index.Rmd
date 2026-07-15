@@ -41,7 +41,9 @@ step 2: build the index for the direct to consumer sale
 we use the squared distance to the neared farmer's market as the weight when we evaluate the travel cost to the nearest farmer's market
 ```{r}
 merged_i <- merged %>% 
-  mutate(direct_to_consumer = (all_sales * d2c_sales_pct)/(distance_nearest_farmersmarket_mile^2)) %>% 
+  mutate(
+    d2c_sales_pct = d2c_sales_pct/100,
+    direct_to_consumer = (all_sales * d2c_sales_pct)/(distance_nearest_farmersmarket_mile^2)) %>% 
   filter(!is.na(direct_to_consumer)) # drop the county that have the missing value in the direct to consumer sale
 ```
 
@@ -51,11 +53,9 @@ step 3: build the index for the intermediate sale from the foodhub
 Note: in here, we do set an assumption that if the sales from the d2c succeed 1, then we assume that there is no foodhub intermedated sale. Otherwise, due to the data limitation, we set the rest of the share to be the foodhub sale
 ```{r}
 merged_i <- merged_i %>% 
-  mutate(foodhub_share = if_else(d2c_sales_pct >= 1,
-                                0, (1 - d2c_sales_pct)),
-         foodhub_inter = if_else(d2c_sales_pct >= 1,
-                                0, 
-                                (all_sales * (1-d2c_sales_pct))/(distance_nearest_hub_mile^2)))
+  mutate( 
+    foodhub_share = 1 - d2c_sales_pct,
+         foodhub_inter = all_sales * (1-d2c_sales_pct)/(distance_nearest_hub_mile^2))
 ```
 
 step 3 : add two index together 

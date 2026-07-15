@@ -118,6 +118,8 @@ hub_proj <- st_transform(hubs_sf, 5070)
 #check whether two are in the same scale
 st_crs(hub_proj) == st_crs(county_centroid)
 ```
+
+
 **identify the distance between the centroid and the hub 
 ```{r}
 distance_hub <- st_distance(county_centroid, hub_proj)
