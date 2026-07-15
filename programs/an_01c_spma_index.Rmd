@@ -73,10 +73,7 @@ library(tidyr)
 library(purrr)
 library(scales)
 library(terra)
-library(rayshader)
-library(rayrender)
-library(rayvertex)
-library(rgl)
+
 library(tidycensus)
 library(magick)
 library(readr)
@@ -278,18 +275,17 @@ showtext::showtext_auto(TRUE)
 
 fig_01c_annotated <- ggplot(map_df) +
   geom_sf(aes(fill = SPMA_0_100), color = NA) + 
-  geom_sf(data = state_outlines, fill = NA, color = "grey55", linewidth = 0.25) + 
+  geom_sf(data = states_sf, fill = NA, color = "grey55", linewidth = 0.25) + 
   geom_sf(data = hubs_pts, shape = 21, fill = "#FFD23F",
           color = "grey50", size = 1.2, stroke = 0.25, alpha = 0.5) +
   scale_fill_gradientn(
-    colours = c(
-      "#EAF4FF",
-      "#C6DBEF",
-      "#9ECAE1",
-      "#6BAED6",
-      "#3182BD",
-      "#08519C"
-    ),
+    colours =  c(
+  "#EFF6FF",
+  "#BFDBFE",
+  "#60A5FA",
+  "#2563EB",
+  "#1E3A8A"
+),
     limits = c(0, 100),
     oob = scales::squish,
     na.value = "#F0F0EC",
