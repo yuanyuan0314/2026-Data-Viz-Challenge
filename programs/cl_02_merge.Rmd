@@ -1,128 +1,24 @@
----
-title: "cl_02_merge"
-author: "Yuanyuan Wen"
-date: "2026-07-07"
-output: html_document
----
-## Purpose
+library(sf); library(dplyr); library(ggplot2)
 
-The goal of this code here:
-standardize the keys to a 5-digit county FIPS and join the three county-level pieces — the
-nearest food-hub distance (cl_01_distance), the nearest farmers-market distance
-(cl_01_farmersmarket_distance), and the SPMA index variables — into one table for the index construction.
+fruit <- readr::read_csv("../data/fruitnut_share.csv") %>%
+  transmute(county_fips = sprintf("%05d", as.integer(fips)), fruitnut_sale) %>%
+  filter(!is.na(fruitnut_sale))
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+top_fruit <- counties_sf %>%
+  inner_join(fruit, by = "county_fips") %>%
+  slice_max(fruitnut_sale, n = 18) %>%
+  st_centroid() %>%
+  mutate(x = st_coordinates(.)[,1], y = st_coordinates(.)[,2]) %>%
+  st_drop_geometry()
 
-Load the library
-```{r}
-library(readr)     # reads the csv files (and lets us fix the messy one below)
-library(dplyr)     # regular data wrangling once things look like data frames
-```
-
-### Step 1
-Read the nearest-hub distance data.
-
-note: `hub_distance_full.csv` was written with `write.csv()` from an sf object in cl_01, so it carries two quirks. First, `write.csv()` adds an unnamed row-index column at the front. Second, the last column `geometry` is an R point printed as an **unquoted** vector `c(x, y)` (the county centroid), whose internal comma splits every row into 13 fields while the header only has 12 names. Every row splits the same way, so we simply supply our own 13 column names and read positionally (skipping the original header).
-
-```{r}
-names_hub <- c("rowidx", "GEOID", "state", "county_name", "distance_nearest_hub_mile",
-               "nearest_hub_name", "nearest_hub_id", "hub_county_geoid", "hub_county_name",
-               "hub_products", "hub_desert", "centroid_x", "centroid_y")
-
-hub_raw <- read_csv("../data/outcome/hub_distance_full.csv",
-                    skip = 1, col_names = names_hub,
-                    col_types = cols(.default = col_character()))
-
-hub_distance <- hub_raw %>%
-  select(-rowidx) %>%                                   # drop the write.csv row index
-  mutate(
-    distance_nearest_hub_mile = as.numeric(distance_nearest_hub_mile),
-    # the split "c(x" / "y)" pieces are cleaned back into the centroid numbers
-    centroid_x  = as.numeric(gsub("[^0-9.eE+-]", "", centroid_x)),
-    centroid_y  = as.numeric(gsub("[^0-9.eE+-]", "", centroid_y)),
-    county_fips = sprintf("%05d", as.integer(GEOID))    # 5-digit county FIPS key
-  )
-
-#glimpse(hub_distance)
-```
-
-### Step 2
-Read SPMA_index_variables.csv (filtered from FAME 2.0). fips is stored as a numeric, so states with FIPS codes below 10 lose their leading zero (e.g., `1001` instead of `01001`). We read it as a character and pad to a 5-digit key.
-
-```{r}
-spma <- read_csv("../data/outcome/fame_variables.csv",
-                 col_types = cols(fips = col_character())) %>%
-  mutate(county_fips = sprintf("%05d", as.integer(fips)))
-
-#glimpse(spma)
-```
-
-### Step 3
-Read the nearest farmers-market distance (from cl_01_farmersmarket_distance).
-
-note: `farmersmarket_distance_full.csv` has the same `write.csv()` + geometry `c(x, y)` quirk
-(12 data fields vs 11 headers, with the split geometry landing in `geo_x` / `geo_y`), so we
-read it positionally too and keep only the farmers-market variables.
-
-```{r}
-names_fm <- c("rowidx", "GEOID", "state", "county_name", "geo_x", "geo_y",
-              "distance_nearest_farmersmarket_mile", "nearest_farmersmarket_name",
-              "nearest_farmersmarket_id", "market_county_geoid", "market_county_name",
-              "farmersmarket_desert")
-
-fm <- read_csv("../data/outcome/farmersmarket_distance_full.csv",
-               skip = 1, col_names = names_fm,
-               col_types = cols(.default = col_character())) %>%
-  transmute(
-    county_fips = sprintf("%05d", as.integer(GEOID)),
-    distance_nearest_farmersmarket_mile = as.numeric(distance_nearest_farmersmarket_mile),
-    nearest_farmersmarket_name,
-    nearest_farmersmarket_id,
-    market_county_geoid,
-    market_county_name,
-    farmersmarket_desert = as.logical(farmersmarket_desert)
-  )
-
-#glimpse(fm)
-```
-
-**validation**: all three pieces should be one row per county, and their keys should line up.
-```{r}
-c(hub_rows = nrow(hub_distance), hub_keys = n_distinct(hub_distance$county_fips),
-  spma_rows = nrow(spma),        spma_keys = n_distinct(spma$county_fips),
-  fm_rows = nrow(fm),            fm_keys = n_distinct(fm$county_fips))
-
-# how many counties are shared across hub-distance and SPMA
-length(intersect(hub_distance$county_fips, spma$county_fips))
-setdiff(hub_distance$county_fips, spma$county_fips)   # only in hub_distance
-setdiff(spma$county_fips, hub_distance$county_fips)   # only in SPMA
-```
-
-### Step 4
-Join the three tables on the county FIPS key. `hub_distance` and `fm` share `state` /
-`county_name` columns, so we suffix to keep everything.
-
-```{r}
-merged <- hub_distance %>%
-  inner_join(spma, by = "county_fips", suffix = c("_hub", "_spma")) %>%
-  left_join(fm, by = "county_fips", suffix = c("", "_fm")) %>%
-  relocate(county_fips)
-
-# (number of counties) x (number of variables)
-dim(merged)
-```
-
-# look at the joined table
-```{r}
-glimpse(merged)
-```
-
-### save the dataset
-note: Save with row.names = FALSE to avoid writing an unnamed index column that would complicate later reads.
-```{r}
-write.csv(merged,
-          "../data/outcome/distance_SPMA_merged.csv",
-          row.names = FALSE)
-```
+p_fruit <- p +
+  ggimage::geom_emoji(
+    data = top_fruit,
+    aes(x = x, y = y, size = fruitnut_sale),
+    image = "1f34e", alpha = 0.9
+  ) +
+  scale_size_continuous(range = c(0.012, 0.045), guide = "none") +
+  labs(caption = paste0(
+    "SPMA = DTC/d_FM^2 + intermediated/d_hub^2. ",
+    "Markers: 18 highest fruit/nut sales counties (2022 Census of Ag)."
+  ))

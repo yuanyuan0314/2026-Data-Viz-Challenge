@@ -1,5 +1,5 @@
 ---
-title: "cl_03_spma_index"
+title: "an_01a_spma_index"
 author: "Yuanyuan Wen, Pragati Dahal"
 date: "2026-07-09"
 output: html_document
@@ -73,6 +73,24 @@ if (!"all_sales" %in% names(dat)) {
 }
 ```
 
+### Step 2b — derive intermediated sales share from DTC share
+`d2c_sales_pct` and `all_sales` have the fewest missing values of any of the sales
+variables, so rather than relying on the sparser `intermediated_sales_pct` column
+directly, we back it out as the complement of DTC: `1 - d2c_sales_pct`. Where
+`d2c_sales_pct` exceeds 1 (a data quality issue — a sales share can't exceed 100%
+by definition, see earlier note on Census of Ag disclosure artifacts), the derived
+intermediated share is set to 0 rather than a negative number.
+```{r}
+dat <- dat %>%
+  mutate(
+    intermediated_sales_pct_derived = if_else(
+      d2c_sales_pct > 1,
+      0,
+      1 - d2c_sales_pct
+    )
+  )
+```
+
 ### Step 3 — compute the SPMA index
 ```{r}
 spma_index <- dat %>%
@@ -80,14 +98,10 @@ spma_index <- dat %>%
     has_hub  = !is.na(number_foodhub) & number_foodhub > 0,
 
     dtc_sales          = all_sales * d2c_sales_pct,
-    local_interm_sales = all_sales * (local_sales_pct - d2c_sales_pct),
-    interm_sales       = all_sales * intermediated_sales_pct,
-
-    # second term's numerator depends on whether the county has a hub
-    term2_numer = if_else(has_hub, local_interm_sales, interm_sales),
-
+    interm_sales       = all_sales * (1 - d2c_sales_pct),
+    
     SPMA = dtc_sales / (distance_nearest_farmersmarket_mile^2) +
-           term2_numer / (distance_nearest_hub_mile^2)
+           interm_sales  / (distance_nearest_hub_mile^2)
   )
 
 # quick look
@@ -142,6 +156,6 @@ spma_index %>%
   select(county_fips, state, county_name = county_name_hub,
          distance_nearest_farmersmarket_mile, distance_nearest_hub_mile,
          number_foodhub, has_hub, all_sales,
-         d2c_sales_pct, local_sales_pct, intermediated_sales_pct, SPMA) %>%
+         d2c_sales_pct, local_sales_pct, intermediated_sales_pct_derived, SPMA) %>%
   write.csv("../data/outcome/spma_index.csv", row.names = FALSE)
 ```

@@ -1,12 +1,17 @@
 ---
-title: "fig_02"
-author: "Xiaoyi Zhao"
+title: "Figure 02: County Level Comparison"
+author: "Xiaoyi Zhao, Pragati Dahal, Yuanyuan Wen"
 date: "2026-07-12"
-output: html_document
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+
+knitr::opts_chunk$set(
+  warning = FALSE,   # hides warnings
+  message = FALSE,   # hides package startup messages, etc.
+  echo = FALSE
+)
 ```
 
 ## Purpose 
@@ -14,9 +19,12 @@ knitr::opts_chunk$set(echo = TRUE)
 2. the county comparison plot will compare the differnce in similar spma but different 
  composition 
 
-
-load the library 
-```{r}
+### Note 
+\begin{itemize}
+  \item The index and the factors represented in the spider graph are percentile
+  \item Since local intermediate sale percentage has a lot of missing values, this county comparison use $(1-(\text{direct to consumer sales' share}))$ as the the estimation of the food hub intermediated sale 
+\end{itemize}
+```{r include=FALSE}
 library(tigris)    # downloads Census TIGER shapefiles (county boundaries)
 library(sf)        # the workhorse: stores and manipulates spatial data
 library(dplyr)     # regular data wrangling once things look like data frames
@@ -27,54 +35,71 @@ library(readxl)
 library(readr)
 library(units)
 
+library(tidycensus)
 #to make the spider plot
 library(scales)
 
-devtools::install_github("ricardo-bion/ggradar")
+#devtools::install_github("ricardo-bion/ggradar")
 library(ggradar)
+
 ```
 
-step 1 : load the dataset 
-```{r}
+```{r include=FALSE}
+# add the statename, we load the statename from the tidycensus first
+state_lookup <- fips_codes %>% 
+  distinct(state_code, state_name)
+  
 merged_final <- read_csv("../data/outcome/merged_final_xz.csv") %>% 
-  select(county_name_hub, county_fips, spma, direct_to_consumer, foodhub_inter, distance_nearest_hub_mile, all_sales, distance_nearest_farmersmarket_mile, all_sales) %>% arrange(spma)
+  select(county_name_hub, county_fips, spma, direct_to_consumer, foodhub_inter, distance_nearest_hub_mile, all_sales, distance_nearest_farmersmarket_mile, all_sales, d2c_sales_pct, foodhub_share, share) %>% 
+  rename(fruit_nut_share = share) %>% 
+  arrange(fruit_nut_share) %>% 
+  filter(county_fips != "22087",
+         !is.na(fruit_nut_share)) %>% 
+  mutate(state_code = substr(county_fips,1, 2)) %>% 
+  left_join(state_lookup, by = "state_code") %>% 
+  mutate(county_name_hub = paste0(county_name_hub,", ", state_name))
+
+
 ```
-After, identifying, Brazos, Texas(48041), and Kandiyohi, Michigan (27067) , Michigan, both have relatively high spma, but Kandiyohi's direct to consumer index is much lower than that of Dane, but the advantage of Willamson is that the distance to the nearest foodhub is much smaller than that of Dane 
+\newpage
+## County Comparison
 
-Step 2, make the visualization 
-```{r, fig.width = 12, fig.height = 5}
-merged_final %>%
-  filter(county_fips %in%  c("48041", "27067"))
+### **Okanogan, Washington v.s. Yakima **
 
- #rescale the component so it can be interpret as the location between national max and national min
-fig_2 <- merged_final %>%
-  filter(county_fips %in%  c("48041", "27067")) %>%
+```{r echo=FALSE, fig.width= 12, fig.height= 5}
+
+fig_2_Okanogan_Yakima <- merged_final %>%
   mutate(
-    direct_to_consumer        = rescale(direct_to_consumer),
-    d2c = rescale(-distance_nearest_farmersmarket_mile),
-    foodhub_inter             = rescale(foodhub_inter),
-    hub_proximity             = rescale(-distance_nearest_hub_mile),
-    all_sales = rescale(all_sales)
+    direct_to_consumer_share        = percent_rank(d2c_sales_pct),
+    d2c = percent_rank(-distance_nearest_farmersmarket_mile),
+    foodhub_inter             = percent_rank(foodhub_inter),
+    hub_proximity             = percent_rank(-distance_nearest_hub_mile),
+    foodhub_share = percent_rank(foodhub_share),
+    spma = percent_rank(spma),
+    fruit_nut_share = percent_rank(fruit_nut_share)
   ) %>%
-  select(group          = county_name_hub,
-         `Direct To Consumer` = direct_to_consumer,
-         `Hub Access`    = foodhub_inter,
-         `Hub Distance`= hub_proximity,
-         `Direct to Consumer Distance` = d2c,
-         `All Sales` = all_sales) %>%
-  mutate(group = recode(group,
-                        "Brazos"  = "Brazos County, Texas",
-                        "Kandiyohi" = "Kandiyohi County, Michigan")) %>%
-  ggradar(font.radar = "roboto",
+  filter(county_fips %in%  c("53047", "53077")) %>%
+  select(group = county_name_hub,
+         `Direct To Consumer Share` = direct_to_consumer_share,
+         `Close to Foodhub`= hub_proximity,
+         `Close to Farmer's Market` = d2c,
+         `Foodhub Intermediated Share` = foodhub_share,
+         `SPMA` = spma,
+         `Fruit Nut Share` = fruit_nut_share) %>%
+  ggradar(font.radar = "sans",
           values.radar   = c("0", "50", "100"),
           group.colours  = c("#861F41", "#E5751F"),
           grid.label.size = 5,
           axis.label.size = 4)+
-  labs(title = "How Foodhub Support Counties?",
-       caption = "Brazo's SPMA is 21792445, and Kandiyohi's SPMA is 80396688") +
+  labs(title = "From Orchard to Opportunity: \n Food Hubs and Small Farm Market Access at the County Level") +
   theme_void() +
   theme(
-    plot.title      = element_text(face = "bold", size = 14, hjust = 0),
+    plot.title = element_text(
+      face = "bold",
+      hjust = 0.5,        # 0 = left, 0.5 = center, 1 = right
+      size = 12,          # default is ~13.2 for titles; go smaller as needed
+      family = "sans"     # generic sans-serif (Arial/Helvetica depending on OS)
+    ),
     plot.subtitle   = element_text(size = 11, color = "grey30",
                                    margin = margin(b = 10)),
     plot.caption    = element_text(size = 8, color = "grey40", hjust = 0),
@@ -84,11 +109,391 @@ fig_2 <- merged_final %>%
     plot.margin     = margin(20, 120, 20, 120)
   ) + coord_equal(clip = "off")
 
+ggsave("../figures/fig_2_Okanogan_Yakima.pdf", plot = fig_2_Okanogan_Yakima, width = 12, height = 5)
+
+fig_2_Okanogan_Yakima
 ```
 
-```{r}
-ggsave("../figures/fig_02_xz.pdf", plot = fig_2, width = 12, height = 5)
+**The story behind**: Okanogan vs. Yakima gives us a clean hub vs. no-hub story. Both are major fruit&nut counties, and both have clean sales-composition data. The split is on food-hub access: Okanogan has 2 hubs with the nearest just 14.7 miles away, while Yakima although being the the larger, better-known producer has no food hub with its nearest hub 63.6 miles out. Here, the more famous producer actually scores lower on market access. This maybe a good story for USDA.
+\newpage
 
-fig_2
+
+### **Ventura, CA v.s. Yakima , Washington**
+
+
+```{r echo=FALSE, fig.width= 12, fig.height= 5}
+
+fig_2_Ventura_Yakima <- merged_final %>%
+  mutate(
+    direct_to_consumer_share        = percent_rank(d2c_sales_pct),
+    d2c = percent_rank(-distance_nearest_farmersmarket_mile),
+    foodhub_inter             = percent_rank(foodhub_inter),
+    hub_proximity             = percent_rank(-distance_nearest_hub_mile),
+    foodhub_share = percent_rank(foodhub_share),
+    spma = percent_rank(spma),
+    fruit_nut_share = percent_rank(fruit_nut_share)
+  ) %>%
+  filter(county_fips %in%  c("06111", "53077")) %>%
+  select(group = county_name_hub,
+         `Direct To Consumer Share` = direct_to_consumer_share,
+         `Close to Foodhub`= hub_proximity,
+         `Close to Farmer's Market` = d2c,
+         `Foodhub Intermediated Share` = foodhub_share,
+         `SPMA` = spma,
+         `Fruit Nut Share` = fruit_nut_share) %>%
+  mutate(group = recode(group,
+                        "Brazos"  = "Brazos County, Texas",
+                        "Kandiyohi" = "Kandiyohi County, Michigan")) %>%
+  ggradar(font.radar = "sans",
+          values.radar   = c("0", "50", "100"),
+          group.colours  = c("#861F41", "#E5751F"),
+          grid.label.size = 5,
+          axis.label.size = 4)+
+  labs(title = "From Orchard to Opportunity: \n Food Hubs and Small Farm Market Access at the County Level") +
+  theme_void() +
+  theme(
+    plot.title = element_text(
+      face = "bold",
+      hjust = 0.5,        # 0 = left, 0.5 = center, 1 = right
+      size = 12,          # default is ~13.2 for titles; go smaller as needed
+      family = "sans"     # generic sans-serif (Arial/Helvetica depending on OS)
+    ),
+    plot.subtitle   = element_text(size = 11, color = "grey30",
+                                   margin = margin(b = 10)),
+    plot.caption    = element_text(size = 8, color = "grey40", hjust = 0),
+    legend.position = "bottom",
+    legend.title    = element_text(size = 9),
+    legend.text     = element_text(size = 8),
+    plot.margin     = margin(20, 120, 20, 120)
+  ) + coord_equal(clip = "off")
+
+ggsave("../figures/fig_2_Ventura_Yakima.pdf", plot = fig_2_Ventura_Yakima, width = 12, height = 5)
+
+fig_2_Ventura_Yakima
 ```
 
+**The story behind**: Compared with Venture, CA, Yakima is much further away from foodhubs' locations. If there are closer foodhubs, the small farmers may have better accessibility to the market.
+\newpage
+
+
+### **Monterey, CA v.s. Kern ,CA**
+
+```{r echo=FALSE, fig.width= 12, fig.height= 5}
+
+fig_2_Monterey_Kern <- merged_final %>%
+  mutate(
+    direct_to_consumer_share        = percent_rank(d2c_sales_pct),
+    d2c = percent_rank(-distance_nearest_farmersmarket_mile),
+    foodhub_inter             = percent_rank(foodhub_inter),
+    hub_proximity             = percent_rank(-distance_nearest_hub_mile),
+    foodhub_share = percent_rank(foodhub_share),
+    spma = percent_rank(spma),
+    fruit_nut_share = percent_rank(fruit_nut_share)
+  ) %>%
+  filter(county_fips %in%  c("06053", "06029")) %>%
+  select(group = county_name_hub,
+         `Direct To Consumer Share` = direct_to_consumer_share,
+         `Close to Foodhub`= hub_proximity,
+         `Close to Farmer's Market` = d2c,
+         `Foodhub Intermediated Share` = foodhub_share,
+         `SPMA` = spma,
+         `Fruit Nut Share` = fruit_nut_share) %>%
+  ggradar(font.radar = "sans",
+          values.radar   = c("0", "50", "100"),
+          group.colours  = c("#861F41", "#E5751F"),
+          grid.label.size = 5,
+          axis.label.size = 4)+
+  labs(title = "From Orchard to Opportunity: \n Food Hubs and Small Farm Market Access at the County Level") +
+  theme_void() +
+  theme(
+    plot.title = element_text(
+      face = "bold",
+      hjust = 0.5,        # 0 = left, 0.5 = center, 1 = right
+      size = 12,          # default is ~13.2 for titles; go smaller as needed
+      family = "sans"     # generic sans-serif (Arial/Helvetica depending on OS)
+    ),
+    plot.subtitle   = element_text(size = 11, color = "grey30",
+                                   margin = margin(b = 10)),
+    plot.caption    = element_text(size = 8, color = "grey40", hjust = 0),
+    legend.position = "bottom",
+    legend.title    = element_text(size = 9),
+    legend.text     = element_text(size = 8),
+    plot.margin     = margin(20, 120, 20, 120)
+  ) + coord_equal(clip = "off")
+
+fig_2_Monterey_Kern
+
+ggsave("../figures/fig_2_Monterey_Kern.pdf", plot = fig_2_Monterey_Kern, width = 12, height = 5)
+```
+
+**The story behind**: Compared with Monterey, CA, Kern,CA is much further away from foodhubs' locations. If there are closer foodhubs, the small farmers may have better accessibility to the market. They're both big fruit&nut producers with similar total farm sales. The food hub gap is also clean: Monterey has 2 hubs, nearest one 31.6 miles, while Kern has zero and its closest is 67.8 miles away.
+\newpage
+
+
+### **Washington, Akansas v.s. Benton, Arkansas **
+
+```{r echo=FALSE, fig.width= 12, fig.height= 5}
+
+fig_2_Washington_Benton <- merged_final %>%
+  mutate(
+    direct_to_consumer_share        = percent_rank(d2c_sales_pct),
+    d2c = percent_rank(-distance_nearest_farmersmarket_mile),
+    foodhub_inter             = percent_rank(foodhub_inter),
+    hub_proximity             = percent_rank(-distance_nearest_hub_mile),
+    foodhub_share = percent_rank(foodhub_share),
+    spma = percent_rank(spma),
+    fruit_nut_share = percent_rank(fruit_nut_share)
+  ) %>%
+  filter(county_fips %in%  c("05143", "05007")) %>%
+  select(group = county_name_hub,
+         `Direct To Consumer Share` = direct_to_consumer_share,
+         `Close to Foodhub`= hub_proximity,
+         `Close to Farmer's Market` = d2c,
+         `Foodhub Intermediated Share` = foodhub_share,
+         `SPMA` = spma,
+         `Fruit Nut Share` = fruit_nut_share) %>%
+  mutate(group = recode(group,
+                        "Guadalupe"  = "Guadalupe County, TX",
+                        "Guthrie" = "Guthrie County, TN")) %>%
+  ggradar(font.radar = "sans",
+          values.radar   = c("0", "50", "100"),
+          group.colours  = c("#861F41", "#E5751F"),
+          grid.label.size = 5,
+          axis.label.size = 4)+
+  labs(title = "From Orchard to Opportunity: \n Food Hubs and Small Farm Market Access at the County Level") +
+  theme_void() +
+  theme(
+    plot.title = element_text(
+      face = "bold",
+      hjust = 0.5,        # 0 = left, 0.5 = center, 1 = right
+      size = 12,          # default is ~13.2 for titles; go smaller as needed
+      family = "sans"     # generic sans-serif (Arial/Helvetica depending on OS)
+    ),
+    plot.subtitle   = element_text(size = 11, color = "grey30",
+                                   margin = margin(b = 10)),
+    plot.caption    = element_text(size = 8, color = "grey40", hjust = 0),
+    legend.position = "bottom",
+    legend.title    = element_text(size = 9),
+    legend.text     = element_text(size = 8),
+    plot.margin     = margin(20, 120, 20, 120)
+  ) + coord_equal(clip = "off")
+
+ggsave("../figures/fig_2_Washington_Benton.pdf", plot = fig_2_Washington_Benton, width = 12, height = 5)
+
+fig_2_Washington_Benton
+```
+
+**The story behind**: Both are very close in SPMA and Fruit and Nut Share, but it is a good example showing how higher foodhub intermediated share and foodhub location can make up for lower direct to consumer share. 
+\newpage
+
+
+### **Grawford, GA vs Camden, GA**
+```{r echo=FALSE, fig.width= 12, fig.height= 5}
+
+fig_2_Grawford_Camden <- merged_final %>%
+  mutate(
+    direct_to_consumer_share        = percent_rank(d2c_sales_pct),
+    d2c = percent_rank(-distance_nearest_farmersmarket_mile),
+    foodhub_inter             = percent_rank(foodhub_inter),
+    hub_proximity             = percent_rank(-distance_nearest_hub_mile),
+    foodhub_share = percent_rank(foodhub_share),
+    spma = percent_rank(spma),
+    fruit_nut_share = percent_rank(fruit_nut_share)
+  ) %>%
+  filter(county_fips %in%  c("13079", "13039")) %>%
+  select(group = county_name_hub,
+         `Direct To Consumer Share` = direct_to_consumer_share,
+         `Close to Foodhub`= hub_proximity,
+         `Close to Farmer's Market` = d2c,
+         `Foodhub Intermediated Share` = foodhub_share,
+         `SPMA` = spma,
+         `Fruit Nut Share` = fruit_nut_share) %>%
+  ggradar(font.radar = "sans",
+          values.radar   = c("0", "50", "100"),
+          group.colours  = c("#861F41", "#E5751F"),
+          grid.label.size = 5,
+          axis.label.size = 4)+
+  labs(title = "From Orchard to Opportunity: \n Food Hubs and Small Farm Market Access at the County Level") +
+  theme_void() +
+  theme(
+    plot.title = element_text(
+      face = "bold",
+      hjust = 0.5,        # 0 = left, 0.5 = center, 1 = right
+      size = 12,          # default is ~13.2 for titles; go smaller as needed
+      family = "sans"     # generic sans-serif (Arial/Helvetica depending on OS)
+    ),
+    plot.subtitle   = element_text(size = 11, color = "grey30",
+                                   margin = margin(b = 10)),
+    plot.caption    = element_text(size = 8, color = "grey40", hjust = 0),
+    legend.position = "bottom",
+    legend.title    = element_text(size = 9),
+    legend.text     = element_text(size = 8),
+    plot.margin     = margin(20, 120, 20, 120)
+  ) + coord_equal(clip = "off")
+
+
+ggsave("../figures/fig_2_Grawford_Camden.pdf", plot = fig_2_Grawford_Camden, width = 12, height = 5)
+
+fig_2_Grawford_Camden
+```
+
+**The story behind*: This can be a good comparison in a state that is less mentioned, and in Geogia, since Crawford has higher foodhub intermediated sale and closer to foodhubs, the effect from foodhub makeup their lower direct to consumer sale share and make them have higher spam than Camden. 
+\newpage
+
+### **Franklin, WA vs. Chilton, Alabama**
+
+```{r echo=FALSE, fig.width= 12, fig.height= 5}
+
+fig_2_Franklin_Chilton <- merged_final %>%
+  mutate(
+    direct_to_consumer_share        = percent_rank(d2c_sales_pct),
+    d2c = percent_rank(-distance_nearest_farmersmarket_mile),
+    foodhub_inter             = percent_rank(foodhub_inter),
+    hub_proximity             = percent_rank(-distance_nearest_hub_mile),
+    foodhub_share = percent_rank(foodhub_share),
+    spma = percent_rank(spma),
+    fruit_nut_share = percent_rank(fruit_nut_share)
+  ) %>%
+  filter(county_fips %in%  c("53021", "01021")) %>%
+  select(group = county_name_hub,
+         `Direct To Consumer Share` = direct_to_consumer_share,
+         `Close to Foodhub`= hub_proximity,
+         `Close to Farmer's Market` = d2c,
+         `Foodhub Intermediated Share` = foodhub_share,
+         `SPMA` = spma,
+         `Fruit Nut Share` = fruit_nut_share) %>%
+  ggradar(font.radar = "sans",
+          values.radar   = c("0", "50", "100"),
+          group.colours  = c("#861F41", "#E5751F"),
+          grid.label.size = 5,
+          axis.label.size = 4)+
+  labs(title = "From Orchard to Opportunity: \n Food Hubs and Small Farm Market Access at the County Level") +
+  theme_void() +
+  theme(
+    plot.title = element_text(
+      face = "bold",
+      hjust = 0.5,        # 0 = left, 0.5 = center, 1 = right
+      size = 12,          # default is ~13.2 for titles; go smaller as needed
+      family = "sans"     # generic sans-serif (Arial/Helvetica depending on OS)
+    ),
+    plot.subtitle   = element_text(size = 11, color = "grey30",
+                                   margin = margin(b = 10)),
+    plot.caption    = element_text(size = 8, color = "grey40", hjust = 0),
+    legend.position = "bottom",
+    legend.title    = element_text(size = 9),
+    legend.text     = element_text(size = 8),
+    plot.margin     = margin(20, 120, 20, 120)
+  ) + coord_equal(clip = "off")
+
+ggsave("../figures/fig_2_Franklin_Chilton.pdf", plot = fig_2_Franklin_Chilton, width = 12, height = 5)
+
+fig_2_Franklin_Chilton
+```
+
+**The story behind**: Tis story is similar, as Franklin is closer to Foodhub and higher foodhub intermediated sales, it has higher spma even though their direct to consumer sale share is lower. 
+\newpage
+
+### **Greenville County, SC  v.s. Buncombe County, NC**
+
+```{r echo=FALSE, fig.width= 12, fig.height= 5}
+
+fig_2_Greenville_Buncombe <- merged_final %>%
+  mutate(
+    direct_to_consumer_share        = percent_rank(d2c_sales_pct),
+    d2c = percent_rank(-distance_nearest_farmersmarket_mile),
+    foodhub_inter             = percent_rank(foodhub_inter),
+    hub_proximity             = percent_rank(-distance_nearest_hub_mile),
+    foodhub_share = percent_rank(foodhub_share),
+    spma = percent_rank(spma),
+    fruit_nut_share = percent_rank(fruit_nut_share)
+  ) %>%
+  filter(county_fips %in%  c("45045", "37021")) %>%
+  select(group = county_name_hub,
+         `Direct To Consumer Share` = direct_to_consumer_share,
+         `Close to Foodhub`= hub_proximity,
+         `Close to Farmer's Market` = d2c,
+         `Foodhub Intermediated Share` = foodhub_share,
+         `SPMA` = spma,
+         `Fruit Nut Share` = fruit_nut_share) %>%
+  ggradar(font.radar = "sans",
+          values.radar   = c("0", "50", "100"),
+          group.colours  = c("#861F41", "#E5751F"),
+          grid.label.size = 5,
+          axis.label.size = 4)+
+  labs(title = "From Orchard to Opportunity: \n Food Hubs and Small Farm Market Access at the County Level") +
+  theme_void() +
+  theme(
+    plot.title = element_text(
+      face = "bold",
+      hjust = 0.5,        # 0 = left, 0.5 = center, 1 = right
+      size = 12,          # default is ~13.2 for titles; go smaller as needed
+      family = "sans"     # generic sans-serif (Arial/Helvetica depending on OS)
+    ),
+    plot.subtitle   = element_text(size = 11, color = "grey30",
+                                   margin = margin(b = 10)),
+    plot.caption    = element_text(size = 8, color = "grey40", hjust = 0),
+    legend.position = "bottom",
+    legend.title    = element_text(size = 9),
+    legend.text     = element_text(size = 8),
+    plot.margin     = margin(20, 120, 20, 120)
+  ) + coord_equal(clip = "off")
+
+fig_2_Greenville_Buncombe
+ggsave("../figures/fig_2_Greenville_Buncombe.pdf", plot = fig_2_Greenville_Buncombe, width = 12, height = 5)
+
+```
+
+**The story behind**: This can be a demonstration that how foodhub allow the county has higher fruit nut share have higher market accessibility
+\newpage
+
+
+### **Marion County County, FL  v.s. Okeechobee County, FL**
+
+```{r echo=FALSE, fig.width= 12, fig.height= 5}
+
+fig_2_Marion_Okeechobee <- merged_final %>%
+  mutate(
+    direct_to_consumer_share        = percent_rank(d2c_sales_pct),
+    d2c = percent_rank(-distance_nearest_farmersmarket_mile),
+    foodhub_inter             = percent_rank(foodhub_inter),
+    hub_proximity             = percent_rank(-distance_nearest_hub_mile),
+    foodhub_share = percent_rank(foodhub_share),
+    spma = percent_rank(spma),
+    fruit_nut_share = percent_rank(fruit_nut_share)
+  ) %>%
+  filter(county_fips %in%  c("12083", "12093")) %>%
+  select(group = county_name_hub,
+         `Direct To Consumer Share` = direct_to_consumer_share,
+         `Close to Foodhub`= hub_proximity,
+         `Close to Farmer's Market` = d2c,
+         `Foodhub Intermediated Share` = foodhub_share,
+         `SPMA` = spma,
+         `Fruit Nut Share` = fruit_nut_share) %>%
+  ggradar(font.radar = "sans",
+          values.radar   = c("0", "50", "100"),
+          group.colours  = c("#861F41", "#E5751F"),
+          grid.label.size = 5,
+          axis.label.size = 4)+
+  labs(title = "From Orchard to Opportunity: \n Food Hubs and Small Farm Market Access at the County Level") +
+  theme_void() +
+  theme(
+    plot.title = element_text(
+      face = "bold",
+      hjust = 0.5,        # 0 = left, 0.5 = center, 1 = right
+      size = 12,          # default is ~13.2 for titles; go smaller as needed
+      family = "sans"     # generic sans-serif (Arial/Helvetica depending on OS)
+    ),
+    plot.subtitle   = element_text(size = 11, color = "grey30",
+                                   margin = margin(b = 10)),
+    plot.caption    = element_text(size = 8, color = "grey40", hjust = 0),
+    legend.position = "bottom",
+    legend.title    = element_text(size = 9),
+    legend.text     = element_text(size = 8),
+    plot.margin     = margin(20, 120, 20, 120)
+  ) + coord_equal(clip = "off")
+
+fig_2_Marion_Okeechobee
+ggsave("../figures/fig_2_Marion_Okeechobee.pdf", plot = fig_2_Marion_Okeechobee, width = 12, height = 5)
+
+```
+**The story behind**: We can imagine if Okeechobee is closer to foodhub, the farmers there will have higher accessibility to the market.
