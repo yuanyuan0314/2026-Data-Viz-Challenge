@@ -59,7 +59,6 @@ Raw inputs are in `data/source/`. They are read but never modified by our code.
 - **FAME 2.0 Master Data** — downloaded from the Data Viz Challenge Dropbox folder
   provided to participants.
 - **Food Hub Directory** — `https://www.usdalocalfoodportal.com/fe/fdirectory_foodhub/`.
-  The filename suffix is the export timestamp assigned at download.
 - **Farmers Market Directory** —
   `https://www.usdalocalfoodportal.com/fe/fdirectory_farmersmarket/`
 - **Census TIGER/Line** — downloaded programmatically at runtime via the `tigris` R
@@ -67,18 +66,16 @@ Raw inputs are in `data/source/`. They are read but never modified by our code.
 - **2022 Census of Agriculture** — pulled programmatically from the USDA NASS QuickStats
   API (`https://quickstats.nass.usda.gov/api/api_GET/`). Requires a free API key.
 
-*This product uses the NASS API but is not endorsed or certified by NASS.*
-
 ***
 ## 3. Code structure
 
-All code is in `programs/`. Prefixes mark the stage: `cl_` clean · `an_` analysis.
-Paths are relative (`../data/...`), so each file must be knit from its own directory.
+All code is in `programs/`. Prefixes mark the stage: `cl_` clean · `an_` analysis and figure generation.
+Paths are relative, so each file must be knit from its own directory.
 
 | File | Purpose |
 |---|---|
 | `cl_01_fame.Rmd` | Subsets FAME to 23 variables, takes the latest year per variable, pivots wide → `fame_variables.csv` |
-| `cl_01_distance.Rmd` | County centroids (EPSG:5070) + nearest food hub distance → `hub_distance_full.csv` |
+| `cl_01_distance.Rmd` | County centroids + nearest food hub distance → `hub_distance_full.csv` |
 | `cl_01_farmersmarket_distance.Rmd` | Nearest farmers market distance, reusing those centroids → `farmersmarket_distance_full.csv` |
 | `cl_02_merge.Rmd` | Joins the three cleaned tables → `distance_SPMA_merged.csv` |
 | `an_01.Rmd` | Builds the SPMA index → `spma_index.csv` |
@@ -160,9 +157,7 @@ code:
 | `farmersmarket_distance_full.csv` | Farmers market distances | `GEOID` |
 
 FIPS codes are zero-padded to 5 digits first, so that codes with a leading zero survive
-the join. Because the three tables each carry a county name column, those are renamed
-apart (`county_name_hub`, `county_name_spma`) rather than silently colliding. The result
-is 3,144 counties by 46 columns.
+the join. The result is 3,144 counties by 46 columns.
 
 → `data/outcome/distance_SPMA_merged.csv`
 
@@ -251,16 +246,15 @@ out always means better access**, otherwise "close to a hub" would point inward 
 Axes: Direct To Consumer Share · Close to Foodhub · Close to Farmer's Market · Foodhub
 Intermediated Share · SPMA · Fruit Nut Share
 
-A natural follow-up question is what would change if a county gained a food hub — or lost
+A natural follow-up question is what would change if a county gained a food hub, or lost
 one. Because SPMA is built from distance to the nearest hub, we can answer that directly:
 add a hub to the directory, recompute the distances, and recompute the index. We apply
-this to a pair of peach-producing counties in Georgia and South Carolina. The spider
-chart shows each county's current position and its simulated position side by side.
+this to a pair of peach-producing counties in Georgia and South Carolina as well as apple-producing
+counties in Washington. The spider chart shows each county's current position and 
+its simulated position side by side.
 
-**These are simulated hubs, not planned or proposed ones.** The exercise illustrates how
-sensitive market access is to hub placement; it does not forecast what would happen if a
-hub were actually built, and it does not model whether producers would use it, whether it
-would be viable, or how it would change sales composition. Only the distance term moves.
+**These are simulated hubs, not planned or proposed ones.** The exercise illustrates how market accessibility 
+would change due to establishment of a hub closer to the farms.
 
 → `figures/fig_02.pdf`
 
