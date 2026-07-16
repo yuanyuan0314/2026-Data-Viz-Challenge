@@ -1,0 +1,181 @@
+---
+title: "Figure 02: County Level Comparison"
+author: "Xiaoyi Zhao, Pragati Dahal, Yuanyuan Wen"
+date: "2026-07-12"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(
+  warning = FALSE,   # hides warnings
+  message = FALSE,   # hides package startup messages, etc.
+  echo = FALSE
+)
+```
+
+## Purpose 
+1. the purpose of this file is to generate the county comparison plot 
+2. The counties are choose are Greenville, SC vs Lee, GA 
+3. We will plot county comparison first
+4. Then, we will plot the whatif case
+
+
+### Step 1: load the library and the merged dataset 
+\begin{itemize}
+  \item The index and the factors represented in the spider graph are percentile
+  \item Since local intermediate sale percentage has a lot of missing values, this county comparison use $(1-(\text{direct to consumer sales' share}))$ as the the estimation of the food hub intermediated sale 
+\end{itemize}
+```{r include=FALSE}
+library(tigris)    # downloads Census TIGER shapefiles (county boundaries)
+library(sf)        # the workhorse: stores and manipulates spatial data
+library(dplyr)     # regular data wrangling once things look like data frames
+
+library(ggplot2)
+library(mapview)
+library(readxl)
+library(readr)
+library(units)
+
+library(tidycensus)
+#to make the spider plot
+library(scales)
+
+#devtools::install_github("ricardo-bion/ggradar")
+library(ggradar)
+
+library(showtext)
+library(sysfonts)
+library(patchwork)
+library(ggtext)
+
+```
+
+Specify the font that we want to use for the visualization
+```{r}
+# set DM Serif Display as the font of title 
+font_add_google(
+  name = "DM Serif Display",
+  family = "title_font"
+)
+
+# set DM Sans as the font of the subtitle and body text if we add notes
+font_add_google(
+  name = "DM Sans",
+  family = "body_font"
+)
+
+# we need to keep this open so that the figure can show the 
+# customized fonts above
+showtext::showtext_auto(TRUE)
+
+```
+
+```{r include=FALSE}
+# add the statename, we load the statename from the tidycensus first
+state_lookup <- fips_codes %>% 
+  distinct(state_code, state_name)
+  
+# load the merged dataset and respecify the names 
+merged_final <- read_csv("../data/outcome/merged_final_xz.csv") %>% 
+  select(county_name_hub, county_fips, spma, direct_to_consumer, foodhub_inter, distance_nearest_hub_mile, all_sales, distance_nearest_farmersmarket_mile, all_sales, d2c_sales_pct, foodhub_share, share) %>% 
+  rename(fruit_nut_share = share) %>% 
+  arrange(fruit_nut_share) %>% 
+  filter(county_fips != "22087",
+         !is.na(fruit_nut_share)) %>% 
+  mutate(state_code = substr(county_fips,1, 2)) %>% 
+  left_join(state_lookup, by = "state_code") %>% 
+  mutate(county_name_hub = paste0(county_name_hub,", ", state_name))
+
+
+```
+\newpage
+
+### Step 2:  County Comparison
+
+**Greenville, SC  v.s. Lee County,GA**
+
+The Fips we identified are 
+```{r echo=FALSE, fig.width= 12, fig.height= 5}
+
+
+fig_2_Greenville_Lee <- merged_final %>%
+  mutate(
+    direct_to_consumer_share        = percent_rank(d2c_sales_pct),
+    d2c = percent_rank(-distance_nearest_farmersmarket_mile),
+    foodhub_inter             = percent_rank(foodhub_inter),
+    hub_proximity             = percent_rank(-distance_nearest_hub_mile),
+    foodhub_share = percent_rank(foodhub_share),
+    spma = percent_rank(spma),
+    fruit_nut_share = percent_rank(fruit_nut_share)
+  ) %>%
+  filter(county_fips %in%  c("45045", "13177")) %>%
+  select(group = county_name_hub,
+         `Direct To \nConsumer Share` = direct_to_consumer_share,
+         `Close to \nFOODHUB`= hub_proximity,
+         `Close to \nFarmer's Market` = d2c,
+         `Foodhub Intermediated Share` = foodhub_share,
+         `SPMA` = spma,
+         `Fruit Nut Share` = fruit_nut_share) %>%
+  ggradar(font.radar = "roboto",
+          values.radar   = c("0", "50", "100"),
+          group.colours  = c("#3182BD", "#FFD23F"),
+          grid.label.size = 5,
+          axis.label.size = 4,
+          axis.label.offset = 1.2,
+          gridline.min.colour = "#BFDBFE",
+          gridline.mid.colour = "#60A5FA",
+          gridline.max.colour = "#1E3A8A") +
+  theme_void(base_family = "body_font") +
+  labs(
+    title = "From Orchard to Opportunity",
+    subtitle = "Food Hubs and Small Farm Market Access at the County Level") +
+  theme(
+    plot.background = element_rect(
+      fill = "#FAF8F2",
+      color = NA
+    ),
+    panel.background = element_rect(
+      fill = "#FAF8F2",
+      color = NA
+    ),
+
+    plot.title = element_text(
+      family = "title_font",
+      size = 25,
+      lineheight = 0.88,
+      color = "#123B65",
+      face = "plain",
+      hjust = 0,
+      margin = margin(b = 10)
+    ),
+
+    plot.subtitle = element_text(
+      family = "body_font",
+      size = 10,
+      lineheight = 1.2,
+      color = "#4B5D6D",
+      hjust = 0,
+      margin = margin(b = 12)
+    ),
+
+    legend.position = "bottom",
+    legend.direction = "horizontal",
+    legend.key.width = unit(2.5, "cm"),
+    legend.key.height = unit(0.28, "cm"),
+
+    plot.margin = margin(
+  t = 10,
+  r = 10,
+  b = 10,
+  l = 10
+)
+) + coord_equal(clip = "off")
+
+fig_2_Greenville_Lee
+
+```
+
+### Step 3: Plot the graph over its whatif case
+
+

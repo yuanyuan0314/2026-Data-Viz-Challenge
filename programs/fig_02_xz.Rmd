@@ -556,3 +556,4 @@ ggsave("../figures/fig_2_Marion_Okeechobee.pdf", plot = fig_2_Marion_Okeechobee,
 
 
 **Story behind**: We can imagine if Okeechobee is closer to foodhub, the farmers there will have higher accessibility to the market.
+

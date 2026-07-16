@@ -7,7 +7,9 @@ output: html_document
 
 ## Purpose
 
-The goal of this code here is to build the index for the market accessiblity 
+The goal of this code here is tobuild the index for the market accessibility for the county comparison 
+
+### Step 1 : load the library and merge the dataset 
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -25,6 +27,8 @@ library(mapview)
 library(readxl)
 library(units)
 library(readr)
+library(scales)
+
 ```
 
 build the index 
@@ -43,8 +47,7 @@ we use the squared distance to the neared farmer's market as the weight when we 
 merged_i <- merged %>% 
   mutate(
     d2c_sales_pct = d2c_sales_pct/100,
-    direct_to_consumer = (all_sales * d2c_sales_pct)/(distance_nearest_farmersmarket_mile^2)) %>% 
-  filter(!is.na(direct_to_consumer)) # drop the county that have the missing value in the direct to consumer sale
+    direct_to_consumer = (all_sales * d2c_sales_pct)/(distance_nearest_farmersmarket_mile^2)) 
 ```
 
 
@@ -54,15 +57,22 @@ Note: in here, we do set an assumption that if the sales from the d2c succeed 1,
 ```{r}
 merged_i <- merged_i %>% 
   mutate( 
-    foodhub_share = 1 - d2c_sales_pct,
-         foodhub_inter = all_sales * (1-d2c_sales_pct)/(distance_nearest_hub_mile^2))
+    foodhub_present = !is.na(number_foodhub) & number_foodhub > 0,
+    foodhub_share = if_else(d2c_sales_pct >= 1, NA, 100 - d2c_sales_pct)) %>% 
+  mutate(foodhub_inter = all_sales * foodhub_share/(distance_nearest_hub_mile^2))
 ```
 
 step 3 : add two index together 
 
 ```{r}
+rescale_0_100 <- function(x) {
+  (x - min(x, na.rm = TRUE)) / (max(x, na.rm = TRUE) - min(x, na.rm = TRUE)) * 100
+}
 merged_final <- merged_i %>% 
-  mutate(spma  = direct_to_consumer + foodhub_inter)
+  mutate(spma_raw  = direct_to_consumer + foodhub_inter,
+         lnspma = log(spma_raw),
+         spma = rescale_0_100(lnspma))
+         
 ```
 
 save the dataset 

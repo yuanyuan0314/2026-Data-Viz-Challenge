@@ -127,6 +127,7 @@ distance_hub <- st_distance(county_centroid, hub_proj)
 # (number of counties) x (number of hubs)
 dim(distance_hub)
 ```
+
 # for each of the row in the distance matrix, identify the hub that is closest to each of the county and the distance
 ```{r}
 nearest_dist <- apply(distance_hub, 1, min)          

@@ -52,22 +52,15 @@ Load the library
 # install.packages(c("showtext", "sysfonts"))
 
 install.packages("rsvg")
-library(rsvg)
-
-library(showtext)
-library(sysfonts)
-
 install.packages("ggimage")
-library(ggimage)
-
-
-library(showtext)
-library(sysfonts)
 
 ```
 
 ```{r}
 library(sf)
+library(rsvg)
+library(ggimage)
+
 library(dplyr)
 library(tidyr)
 library(purrr)
@@ -276,15 +269,22 @@ showtext::showtext_auto(TRUE)
 fig_01c_annotated <- ggplot(map_df) +
   geom_sf(aes(fill = SPMA_0_100), color = NA) + 
   geom_sf(data = states_sf, fill = NA, color = "grey55", linewidth = 0.25) + 
-  geom_sf(data = hubs_pts, shape = 21, fill = "#FFD23F",
-          color = "grey50", size = 1.2, stroke = 0.25, alpha = 0.5) +
+  geom_sf(
+  data = hubs_pts,
+  shape = 21,
+  fill = "#86EFAC",
+  color = "#15803D",
+  size = 2,
+  stroke = 0.4,
+  alpha = 0.85
+) +
   scale_fill_gradientn(
-    colours =  c(
+    colours = c(
   "#EFF6FF",
-  "#BFDBFE",
-  "#60A5FA",
-  "#2563EB",
-  "#1E3A8A"
+  "#C7D2FE",
+  "#A5B4FC",
+  "#7C3AED",
+  "#4C1D95"
 ),
     limits = c(0, 100),
     oob = scales::squish,
