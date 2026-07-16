@@ -73,4 +73,6 @@ A free NASS QuickStats API key is required. Open the `.Rproj`, confirm `data/sou
 
 ## Use of generative AI
 
-*[section to be completed]*
+We used generative AI (Claude) as a general-purpose coding assistant: tidying and reorganizing R code, 
+resolving errors, and editing documentation. It was not used to design the index, select variables, or interpret results. 
+All outputs were reviewed and verified by the authors.
