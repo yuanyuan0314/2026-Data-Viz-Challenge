@@ -11,7 +11,7 @@
 
 
 
-<title>README_pd</title>
+<title>README_pd_short</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -354,154 +354,83 @@ display: none;
 
 <div id="fruit-and-tree-nut-from-branch-to-buyer" class="section level1">
 <h1>Fruit and Tree Nut: From Branch to Buyer</h1>
-<p><strong>Small-Producer Market Access (SPMA) Index</strong><br />
-2026 USDA AMS × AAEA GSS Data Visualization Challenge</p>
+<p><strong>Small-Producer Market Access (SPMA) Index</strong> 2026 USDA
+AMS × AAEA GSS Data Visualization Challenge</p>
 <p>Pragati Dahal · Xiaoyi Zhao · Yuanyuan Wen (Virginia Tech)</p>
 <hr />
-<div id="what-this-project-does" class="section level2">
-<h2>What this project does</h2>
-<p>Market access is a persistent challenge for small fresh-produce
-farmers. Because their products are perishable, fruit and tree nut
-growers face higher transportation costs from cold-chain requirements,
-higher entry costs and risk in maintaining orchards, and less bargaining
-power with large supply chains. <strong>Food hubs</strong> are
-intermediaries that aggregate produce from multiple farmers and
-redistribute it to buyers. Funding for hubs has grown in recent years,
-but there is limited evidence on how much they actually improve market
-access.</p>
-<p>We build a county-level <strong>Small-Producer Market Access
-(SPMA)</strong> index to estimate that effect:</p>
+<div id="overview" class="section level2">
+<h2>Overview</h2>
+<p>Fresh fruit and tree nut growers face steep barriers to market:
+perishable products, cold-chain costs, and limited bargaining power with
+large buyers. <strong>Food hubs</strong> aggregate produce from small
+farms and connect it to buyers, but evidence on how much they improve
+market access is thin.</p>
+<p>We build a county-level <strong>Small-Producer Market Access (SPMA)
+index</strong> that combines two channels of sales — direct-to-consumer
+and food-hub intermediated — each discounted by the distance a producer
+would travel to reach the nearest outlet. The gravity-style distance
+discount reflects that transport cost and quality loss rise steeply with
+distance for fresh produce.</p>
 <p><span class="math display">\[\text{SPMA}_i = \frac{\text{DTC
-Sales}_i}{\left(d^{\text{FM}}_i\right)^2} + \frac{\text{Food Hub
-Intermediated Sales}_i}{\left(d^{\text{Hub}}_i\right)^2}\]</span></p>
-<table>
-<colgroup>
-<col width="50%" />
-<col width="50%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th>Term</th>
-<th>Definition</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><span class="math inline">\(\text{DTC Sales}_i\)</span></td>
-<td><code>all_sales</code> × <code>d2c_sales_pct</code> / 100</td>
-</tr>
-<tr class="even">
-<td><span class="math inline">\(\text{Food Hub Intermediated
-Sales}_i\)</span></td>
-<td><code>all_sales</code> × (100 − <code>d2c_sales_pct</code>) /
-100</td>
-</tr>
-<tr class="odd">
-<td><span class="math inline">\(d^{\text{FM}}_i\)</span></td>
-<td>Miles from county centroid to nearest farmers market</td>
-</tr>
-<tr class="even">
-<td><span class="math inline">\(d^{\text{Hub}}_i\)</span></td>
-<td>Miles from county centroid to nearest food hub</td>
-</tr>
-</tbody>
-</table>
-<p>Each sales channel is discounted by the squared distance to its
-outlet, following standard gravity-model practice which is suitable for
-fresh produce, where transport cost and quality loss rise faster than
-proportionally with distance. Producer locations are not public, so the
-county centroid approximates the average haul.</p>
-<p><strong>Deliverables:</strong></p>
+Sales}_i}{\left(d^{\text{FM}}_i\right)^2} + \frac{\text{Hub
+Sales}_i}{\left(d^{\text{Hub}}_i\right)^2}\]</span></p>
+<p><strong>Deliverables</strong></p>
 <ol style="list-style-type: decimal">
-<li>A national county-level choropleth map with food hubs overlaid.</li>
-<li>County-pair spider charts contrasting counties with high vs. low
-food hub access, including a simulation of how access would change if a
-food hub were added.</li>
+<li><strong><code>fig_01.pdf</code></strong> — national county-level
+choropleth of SPMA, with food hub locations overlaid.</li>
+<li><strong><code>fig_02.pdf</code></strong> — county-pair spider charts
+comparing high- and low-access counties, including a simulation of how
+access would shift if a food hub were added nearby.</li>
 </ol>
 <hr />
 </div>
-<div id="data-sources" class="section level2">
-<h2>1. Data sources</h2>
-<p>Raw inputs are in <code>data/source/</code>. They are read but never
-modified by our code.</p>
+<div id="data" class="section level2">
+<h2>Data</h2>
 <table>
 <colgroup>
-<col width="25%" />
-<col width="25%" />
-<col width="25%" />
-<col width="25%" />
+<col width="50%" />
+<col width="50%" />
 </colgroup>
 <thead>
 <tr class="header">
 <th>Source</th>
-<th>File</th>
-<th>What it contains</th>
-<th>Why it matters</th>
+<th>Role</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td><strong>FAME 2.0 Master Data</strong></td>
-<td><code>FAME_MasterData_Feb2026.csv</code></td>
-<td>Long-format county panel: one row per county × variable × year.</td>
-<td>Core dataset for the challenge. Supplies every non-spatial input to
-the index.</td>
+<td>FAME 2.0 Master Data</td>
+<td>County-level sales and direct-to-consumer shares</td>
 </tr>
 <tr class="even">
-<td><strong>USDA AMS Food Hub Directory</strong></td>
-<td><code>foodhub_2026-75161420.xlsx</code></td>
-<td>Point-level directory of US food hubs.</td>
-<td>Hub coordinates produce <span class="math inline">\(d^{\text{Hub}}\)</span>, denominator of the
-intermediated-sales term, and the point overlay on the choropleth.</td>
+<td>USDA AMS Food Hub Directory</td>
+<td>Food hub locations</td>
 </tr>
 <tr class="odd">
-<td><strong>USDA AMS Farmers Market Directory</strong></td>
-<td><code>farmersmarket_2026-623143939.xlsx</code></td>
-<td>Point-level directory of US farmers markets.</td>
-<td>Market coordinates produce <span class="math inline">\(d^{\text{FM}}\)</span>, denominator of the
-direct-to-consumer term.</td>
+<td>USDA AMS Farmers Market Directory</td>
+<td>Farmers market locations</td>
 </tr>
 <tr class="even">
-<td><strong>Census TIGER/Line</strong> (2023)</td>
-<td><em>not committed — pulled at runtime</em></td>
-<td>2023 cartographic-boundary county and state polygons.</td>
-<td>County polygons give the centroids anchoring every distance
-calculation, the <code>GEOID</code> that joins spatial data to FAME
-<code>fips</code>, and the map geometry.</td>
+<td>Census TIGER/Line (2023)</td>
+<td>County boundaries and centroids</td>
 </tr>
 <tr class="odd">
-<td><strong>2022 Census of Agriculture</strong></td>
-<td><code>fruitnut_share.csv</code></td>
-<td>County-level fruit and tree nut sales, total farm sales, and the
-fruit/nut share of sales.</td>
-<td>Supplies the <code>Fruit Nut Share</code> axis in the spider
-charts.</td>
+<td>2022 Census of Agriculture (NASS QuickStats)</td>
+<td>Fruit and tree nut share of sales</td>
 </tr>
 </tbody>
 </table>
-<p><strong>How each source was accessed</strong></p>
-<ul>
-<li><strong>FAME 2.0 Master Data</strong> — downloaded from the Data Viz
-Challenge Dropbox folder provided to participants.</li>
-<li><strong>Food Hub Directory</strong> —
-<code>https://www.usdalocalfoodportal.com/fe/fdirectory_foodhub/</code>.</li>
-<li><strong>Farmers Market Directory</strong> —
-<code>https://www.usdalocalfoodportal.com/fe/fdirectory_farmersmarket/</code></li>
-<li><strong>Census TIGER/Line</strong> — downloaded programmatically at
-runtime via the <code>tigris</code> R package.</li>
-<li><strong>2022 Census of Agriculture</strong> — pulled
-programmatically from the USDA NASS QuickStats API
-(<code>https://quickstats.nass.usda.gov/api/api_GET/</code>). Requires a
-free API key.</li>
-</ul>
+<p>Distances are measured from county centroids to the nearest outlet,
+since producer locations are not public. Analysis covers the continental
+US.</p>
 <hr />
 </div>
-<div id="code-structure" class="section level2">
-<h2>3. Code structure</h2>
-<p>All code is in <code>programs/</code>. Prefixes mark the stage:
-<code>cl_</code> clean · <code>an_</code> analysis and figure
-generation. Paths are relative, so each file must be knit from its own
-directory.</p>
+<div id="code" class="section level2">
+<h2>Code</h2>
+<p>Code lives in <code>programs/</code>, with <code>cl_</code> files
+handling cleaning and <code>an_</code> files producing the index and
+figures. Data flows one direction:</p>
+<pre><code>data/source/  →  cl_*  →  data/outcome/  →  an_*  →  figures/</code></pre>
 <table>
 <colgroup>
 <col width="50%" />
@@ -510,258 +439,59 @@ directory.</p>
 <thead>
 <tr class="header">
 <th>File</th>
-<th>Purpose</th>
+<th>Output</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td><code>cl_01_fame.Rmd</code></td>
-<td>Subsets FAME to 23 variables, takes the latest year per variable,
-pivots wide → <code>fame_variables.csv</code></td>
+<td><code>fame_variables.csv</code></td>
 </tr>
 <tr class="even">
 <td><code>cl_01_distance.Rmd</code></td>
-<td>County centroids + nearest food hub distance →
-<code>hub_distance_full.csv</code></td>
+<td><code>hub_distance_full.csv</code></td>
 </tr>
 <tr class="odd">
 <td><code>cl_01_farmersmarket_distance.Rmd</code></td>
-<td>Nearest farmers market distance, reusing those centroids →
-<code>farmersmarket_distance_full.csv</code></td>
+<td><code>farmersmarket_distance_full.csv</code></td>
 </tr>
 <tr class="even">
 <td><code>cl_02_merge.Rmd</code></td>
-<td>Joins the three cleaned tables →
-<code>distance_SPMA_merged.csv</code></td>
+<td><code>distance_SPMA_merged.csv</code></td>
 </tr>
 <tr class="odd">
 <td><code>an_01.Rmd</code></td>
-<td>Builds the SPMA index → <code>spma_index.csv</code></td>
+<td><code>spma_index.csv</code></td>
 </tr>
 <tr class="even">
 <td><code>an_02.Rmd</code></td>
-<td>National choropleth → <code>fig_01.pdf</code></td>
+<td><code>figures/fig_01.pdf</code></td>
 </tr>
 <tr class="odd">
 <td><code>an_03.Rmd</code></td>
-<td>County-pair spider charts → <code>fig_02.pdf</code></td>
+<td><code>figures/fig_02.pdf</code></td>
 </tr>
 </tbody>
 </table>
-<p>Data flows one direction: <code>data/source/</code> →
-<code>cl_*</code> → <code>data/outcome/</code> → <code>an_*</code> →
-<code>figures/</code>.</p>
 <hr />
 </div>
-<div id="data-transformations" class="section level2">
-<h2>3. Data transformations</h2>
-<div id="reshaping-fame-cl_01_fame.rmd" class="section level3">
-<h3>3.1 Reshaping FAME — <code>cl_01_fame.Rmd</code></h3>
-<p>FAME arrives in long format: one row per county, per variable, per
-year, so before we can use it, it has to become one row per county.</p>
-<ol style="list-style-type: decimal">
-<li><p><strong>Keep only what we need.</strong> Filter the file down to
-our 23 variables. A check runs first to confirm every variable name we
-asked for actually exists in the file, guarding against typos in the
-list.</p></li>
-<li><p><strong>Pick a year for each variable.</strong> No single year
-covers all 23 variables, so forcing a common year would throw away a lot
-of counties. Instead, each variable contributes its most recent
-available observation for that county.</p></li>
-<li><p><strong>Reshape from long to wide.</strong> One row per county,
-one column per variable.</p></li>
-</ol>
-<p>→ <code>data/outcome/fame_variables.csv</code></p>
-</div>
-<div id="distances-cl_01_distance.rmd-cl_01_farmersmarket_distance.rmd" class="section level3">
-<h3>3.2 Distances — <code>cl_01_distance.Rmd</code>,
-<code>cl_01_farmersmarket_distance.Rmd</code></h3>
-<p>These two scripts answer one question for every county: <strong>how
-far would a producer have to travel to reach the nearest farmers market,
-and the nearest food hub?</strong></p>
-<ol style="list-style-type: decimal">
-<li><p><strong>Find a point for each county.</strong> Download 2023
-county boundaries and take the centroid of each one. Producer locations
-are not public, so the centroid stands in for the “average” farm in the
-county.</p></li>
-<li><p><strong>Put everything on the same map.</strong> Counties and
-directory listings are converted to a common projection — EPSG:5070, an
-equal-area projection measured in metres and designed for the
-continental US. Distances are only meaningful once both layers sit in
-the same coordinate system. Listings with missing coordinates are
-dropped.</p></li>
-<li><p><strong>Measure every county against every outlet.</strong>
-Compute the full distance matrix from each county centroid to each food
-hub, and separately to each farmers market, then keep the smallest
-distance in each row. That is the nearest outlet. Distances are
-converted from metres to miles.</p>
-<p>The nearest outlet <strong>does not have to be in the same
-county</strong>. A county with no hub of its own is matched to the
-closest hub across the border, which is the point: we are measuring
-travel distance, not counting what sits inside county lines.</p></li>
-<li><p><strong>Attach details about the nearest outlet</strong> — which
-county it sits in, and what products it handles.</p></li>
-<li><p><strong>Flag the hard-to-reach counties.</strong>
-<code>hub_desert</code> marks counties whose nearest hub is 20+ miles
-away.</p></li>
-<li><p><strong>Drop places we cannot measure well.</strong> Territories
-are excluded. Alaska and Hawaii are dropped too, as they fall outside
-the projection’s intended area, so distances there come out badly
-distorted (one Aleutian county produced an implausible ~1,000-mile
-result).</p></li>
-</ol>
-<p>The farmers market script reuses the county centroids saved by the
-hub script, so both distances are measured from exactly the same
-starting points.</p>
-<p>→ <code>data/outcome/hub_distance_full.csv</code>,
-<code>data/outcome/farmersmarket_distance_full.csv</code></p>
-</div>
-<div id="putting-it-together-cl_02_merge.rmd" class="section level3">
-<h3>3.3 Putting it together — <code>cl_02_merge.Rmd</code></h3>
-<p>Three cleaned tables become one analysis table, joined on the
-county’s 5-digit FIPS code:</p>
-<table>
-<colgroup>
-<col width="33%" />
-<col width="33%" />
-<col width="33%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th>Input</th>
-<th>What it brings</th>
-<th>Joins on</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><code>hub_distance_full.csv</code></td>
-<td>Hub distances, county centroids</td>
-<td><code>GEOID</code></td>
-</tr>
-<tr class="even">
-<td><code>fame_variables.csv</code></td>
-<td>The FAME variables, one row per county</td>
-<td><code>fips</code></td>
-</tr>
-<tr class="odd">
-<td><code>farmersmarket_distance_full.csv</code></td>
-<td>Farmers market distances</td>
-<td><code>GEOID</code></td>
-</tr>
-</tbody>
-</table>
-<p>FIPS codes are zero-padded to 5 digits first, so that codes with a
-leading zero survive the join. The result is 3,144 counties by 46
-columns.</p>
-<p>→ <code>data/outcome/distance_SPMA_merged.csv</code></p>
-<hr />
-</div>
-</div>
-<div id="building-our-deliverables" class="section level2">
-<h2>4. Building our deliverables</h2>
-<div id="building-the-index-an_01.rmd" class="section level3">
-<h3>4.1 Building the index — <code>an_01.Rmd</code></h3>
-<ol style="list-style-type: decimal">
-<li>Convert the direct-to-consumer percentage into a proportion.</li>
-<li>Split total sales into the two channels: DTC sales and intermediated
-sales.</li>
-<li>Divide each by the squared distance to its matching outlet, i.e. DTC
-by the farmers market distance, intermediated by the food hub
-distance.</li>
-<li>Add the two together. That sum is SPMA.</li>
-</ol>
-<p>→ <code>data/outcome/spma_index.csv</code></p>
-</div>
-<div id="preparing-the-choropleth-map-an_02.rmd" class="section level3">
-<h3>4.2 Preparing the choropleth map — <code>an_02.Rmd</code></h3>
-<p>The national map shades every county by its SPMA score and marks
-where the food hubs actually are. Turning the index table into that map
-takes a few steps:</p>
-<ol style="list-style-type: decimal">
-<li><p><strong>Get the map shapes.</strong> Download 2023 county and
-state boundaries and project them to EPSG:5070, the same equal-area
-projection used for the distance calculations, so the map is not
-distorted.</p></li>
-<li><p><strong>Keep the lower 48.</strong> Alaska, Hawaii, and the
-territories are dropped. They were already excluded from the index, and
-including them would shrink the continental US to a corner of the
-frame.</p></li>
-<li><p><strong>Attach the scores to the shapes.</strong> Join the index
-table to the county polygons on FIPS code. Counties with no score stay
-on the map in grey rather than disappearing — a blank county and a
-low-scoring county mean different things, and the caption reports how
-many are blank.</p></li>
-<li><p><strong>Plot the food hubs on top.</strong> The hub directory is
-loaded again, converted to map points, and drawn as dots over the
-shading. This lets a reader see the index and its main driver at the
-same time: dark counties tend to sit near clusters of dots.</p></li>
-<li><p><strong>Shade the counties.</strong> Fill color comes from the
-0–100 rescaled index described in 4.1, on a light-to-dark blue scale,
-with the scale capped at the 95th percentile.</p></li>
-</ol>
-<p>→ <code>figures/fig_01.pdf</code></p>
-</div>
-<div id="preparing-the-spider-charts-an_03.rmd" class="section level3">
-<h3>4.3 Preparing the spider charts — <code>an_03.Rmd</code></h3>
-<p>The spider charts compare two counties across six measures at once.
-Those measures come in incompatible units — dollars, miles, percentages
-— so plotting raw values on shared axes would be meaningless.</p>
-<p><strong>Every axis is converted to a percentile rank</strong> across
-all counties in the sample. An axis value of 0.9 means “this county is
-in the 90th percentile nationally on this measure.” Distance measures
-are flipped before ranking, so that on every axis, <strong>further out
-always means better access</strong>, otherwise “close to a hub” would
-point inward while “high sales” pointed outward, and the shapes would be
-unreadable.</p>
-<p>Axes: Direct To Consumer Share · Close to Foodhub · Close to Farmer’s
-Market · Foodhub Intermediated Share · SPMA · Fruit Nut Share</p>
-<p>A natural follow-up question is what would change if a county gained
-a food hub, or lost one. Because SPMA is built from distance to the
-nearest hub, we can answer that directly: add a hub to the directory,
-recompute the distances, and recompute the index. We apply this to a
-pair of peach-producing counties in Georgia and South Carolina as well
-as apple-producing counties in Washington. The spider chart shows each
-county’s current position and its simulated position side by side.</p>
-<p><strong>These are simulated hubs, not planned or proposed
-ones.</strong> The exercise illustrates how market accessibility would
-change due to establishment of a hub closer to the farms.</p>
-<p>→ <code>figures/fig_02.pdf</code></p>
-<hr />
-</div>
-</div>
-<div id="reproducing-our-deliverables" class="section level2">
-<h2>5. Reproducing our deliverables</h2>
-<p><strong>Requirements</strong></p>
+<div id="reproducing" class="section level2">
+<h2>Reproducing</h2>
 <pre class="r"><code>install.packages(c(
   &quot;tidyverse&quot;, &quot;sf&quot;, &quot;tigris&quot;, &quot;units&quot;, &quot;tidycensus&quot;, &quot;terra&quot;,
   &quot;ggplot2&quot;, &quot;scales&quot;, &quot;ggnewscale&quot;, &quot;ggtext&quot;, &quot;patchwork&quot;,
   &quot;showtext&quot;, &quot;sysfonts&quot;, &quot;ggimage&quot;, &quot;rsvg&quot;, &quot;magick&quot;, &quot;ragg&quot;
 ))
 devtools::install_github(&quot;ricardo-bion/ggradar&quot;)   # not on CRAN</code></pre>
-<p>A free NASS QuickStats API key is also needed to pull the fruit/nut
-share data.</p>
-<p><strong>Steps</strong></p>
-<ol style="list-style-type: decimal">
-<li><p>Clone the fork, open
-<code>2026-Data-Viz-Challenge-main.Rproj</code>, and confirm
-<code>data/source/</code> holds the raw inputs from 1.</p></li>
-<li><p>Set <code>options(tigris_use_cache = TRUE)</code> so boundaries
-download only once.</p></li>
-<li><p>Knit in order:</p>
-<pre><code>cl_01_fame.Rmd                     →  fame_variables.csv
-cl_01_distance.Rmd                 →  hub_distance_full.csv
-cl_01_farmersmarket_distance.Rmd   →  farmersmarket_distance_full.csv
-cl_02_merge.Rmd                    →  distance_SPMA_merged.csv</code></pre></li>
-<li><p>Then build the index and the figures:</p>
-<pre><code>an_01.Rmd   →  spma_index.csv        SPMA index
-an_02.Rmd   →  figures/fig_01.pdf    national choropleth
-an_03.Rmd   →  figures/fig_02.pdf    county spider charts</code></pre></li>
-</ol>
+<p>A free NASS QuickStats API key is required. Open the
+<code>.Rproj</code>, confirm <code>data/source/</code> holds the raw
+inputs, then knit the <code>cl_*</code> files in order followed by
+<code>an_01</code>–<code>an_03</code>. Each file is knit from its own
+directory.</p>
 <hr />
 </div>
 <div id="use-of-generative-ai" class="section level2">
-<h2>6. Use of generative AI</h2>
+<h2>Use of generative AI</h2>
 <p>We used generative AI (Claude) as a general-purpose coding assistant:
 tidying and reorganizing R code, resolving errors, and editing
 documentation. It was not used to design the index, select variables, or
