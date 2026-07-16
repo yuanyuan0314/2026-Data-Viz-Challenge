@@ -1,0 +1,17 @@
+---
+title: "an_01"
+author: "Xiaoyi Zhao"
+date: "2026-07-07"
+output: html_document
+---
+
+## Purpose
+
+The goal of this code here is to do two things 
+(1) Generate the index for the market accessibility for the 
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
