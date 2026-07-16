@@ -42,7 +42,6 @@ library(sf)
 library(tigris)
 library(ggplot2)
 library(readxl)
-library(ggnewscale)
 options(tigris_use_cache = TRUE)
 ```
 
@@ -112,7 +111,7 @@ drop_fp <- c("02", "15", "60", "66", "69", "72", "78")
 foodhub_raw <- read_excel("../data/source/foodhub_2026-75161420.xlsx")
 
 foodhub_directory <- foodhub_raw %>%
-  select(listing_id, listing_name, location_x, location_y, products) %>%
+  select(listing_id, listing_name, location_x, location_y) %>%
   rename(lon = location_x, lat = location_y) %>%
   mutate(lon = as.numeric(lon),
          lat = as.numeric(lat)) %>%
@@ -128,19 +127,6 @@ hubs_pts <- st_join(hubs_sf, county_lookup, join = st_within) %>%
   filter(!STATEFP %in% drop_fp) %>%
   st_transform(5070)
 
-crop_lu <- tibble::tribble(
-  ~NAME,            ~icon,
-  "Washington",     "🍎",
-  "Oregon",         "🍐",
-  "California",     "🍇",
-  "Wisconsin",      "🫐",
-  "Michigan",       "🍒",
-  "Maine",          "🫐",
-  "Florida",        "🍊",
-  "Georgia",        "🍑",
-  "South Carolina", "🍑",
-  "Texas",          "🍈"
-)
 ```
 ### Step 5 — US county choropleth
 ```{r}
@@ -152,12 +138,7 @@ counties_sf <- counties(cb = TRUE, year = 2023, progress_bar = FALSE) %>%
 
 states_sf <- states(cb = TRUE, year = 2023, progress_bar = FALSE) %>%
   filter(!STATEFP %in% drop_fp) %>%
-  select(NAME) %>%
   st_transform(5070)
-
-crop_pts <- states_sf %>%
-  inner_join(crop_lu, by = "NAME") %>%
-  st_point_on_surface()
 
 map_df <- counties_sf %>%
   left_join(spma_index, by = "county_fips")
@@ -166,26 +147,24 @@ p <- ggplot(map_df) +
   geom_sf(aes(fill = SPMA_0_100), color = NA) +
   geom_sf(data = states_sf, fill = NA, color = "grey30", linewidth = 0.2) +
   geom_sf(data = hubs_pts, shape = 21, fill = "pink",
-          color = "grey50", size = 1.2, stroke = 0.25, alpha = 0.5) +
+          color = "grey50", size = 1.2, stroke = 0.25, alpha = 0.7) +
   scale_fill_distiller(
     palette   = "Blues",
     direction = 1,
     limits    = c(0, clip_hi),
     oob       = scales::squish,
     labels    = scales::label_number(accuracy = 1),
-    na.value  = "grey90",
+    na.value  = "grey70",
     name      = "SPMA\n(0-100)"
   ) +
   coord_sf(crs = 5070) +
-  geom_sf_text(data = crop_pts, aes(label = icon), size = 7) +
   labs(
     title    = "Small-Producer Market Access (SPMA) index by county",
     subtitle = "Higher = better weighted access to farmers markets & food hubs",
     caption = paste0(
   "Grey polygons = no data (", n_na, " counties). Color scale clipped at ",
   round(clip_hi), "; counties above are shown at the darkest shade.\n",
-  "Pink dots = food hub locations. Fruit icons mark leading fruit/nut states ",
-  "(USDA ERS, Fruit and Tree Nuts Outlook, FTS-384, March 2026); illustrative, not to scale.")
+  "Pink dots = food hub locations.")
   ) +
   theme_void(base_size = 12) +
   theme(
@@ -202,8 +181,8 @@ p
 ### Step 6 — save
 ```{r}
 dir.create("../figures", showWarnings = FALSE)
-ggsave("../figures/spma_choropleth.png", p, width = 11, height = 7, dpi = 150,
-       device = ragg::agg_png)
+ggsave("../figures/fig_01.png", p, width = 11, height = 7, dpi = 150)
+ggsave("../figures/fig_01.pdf", p, width = 11, height = 7)
 spma_index %>%
   select(county_fips, state, county_name = county_name_hub,
          distance_nearest_farmersmarket_mile, distance_nearest_hub_mile,
