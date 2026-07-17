@@ -148,13 +148,13 @@ fig_2_Greenville_Lee
 
 ```
 
-**Yokima, WA  v.s. Okanogan, WA**
+**Yakima, WA  v.s. Okanogan, WA**
 
 The Fips we identified are 
 ```{r echo=FALSE, fig.width= 12, fig.height= 5}
 
 
-fig_2_Yokima_Okanogan <- merged_final %>%
+fig_2_Yakima_Okanogan <- merged_final %>%
   mutate(
     direct_to_consumer_share        = percent_rank(d2c_sales_pct),
     d2c = percent_rank(-distance_nearest_farmersmarket_mile),
@@ -223,7 +223,7 @@ fig_2_Yokima_Okanogan <- merged_final %>%
 )
 ) + coord_equal(clip = "off")
 
-fig_2_Yokima_Okanogan
+fig_2_Yakima_Okanogan
 
 ```
 
@@ -327,12 +327,12 @@ fig_2_lee
 
 
 
-### Step 4: Plot the graph over its whatif case 2: Yokima vs Okanogan in WA
+### Step 4: Plot the graph over its whatif case 2: Yakima vs Okanogan in WA
 
 load the simulated data first 
 ```{r}
 
-merged_whatif_yokima <- read_csv("../data/outcome/spma_index_yakima_okanogan.csv") %>% 
+merged_whatif_yakima <- read_csv("../data/outcome/spma_index_yakima_okanogan.csv") %>% 
   mutate(distance_nearest_hub_mile_exchange = rev(distance_nearest_hub_mile)) %>% 
   filter(county_fips == 53077) %>% 
   select(county_name, county_fips, SPMA_exchange_0_100, distance_nearest_hub_mile_exchange, distance_nearest_farmersmarket_mile, d2c_sales_pct, share) %>%
@@ -344,7 +344,7 @@ merged_whatif_yokima <- read_csv("../data/outcome/spma_index_yakima_okanogan.csv
   left_join(state_lookup, by = "state_code") %>% 
   mutate(county_name_hub = paste0(county_name,", ", state_name, " (With Closer Foodhub)"))
 
-merged_final_whatif_yokima <- rbind(merged_final %>% filter(county_fips != 53077), merged_whatif_yokima)
+merged_final_whatif_yakima <- rbind(merged_final %>% filter(county_fips != 53077), merged_whatif_yakima)
 
 
 ```
@@ -353,7 +353,7 @@ merged_final_whatif_yokima <- rbind(merged_final %>% filter(county_fips != 53077
 ```{r echo=FALSE, fig.width= 12, fig.height= 5}
 
 
-fig_2_yokima <- merged_final_whatif_yokima %>%
+fig_2_yakima <- merged_final_whatif_yakima %>%
   mutate(
     direct_to_consumer_share        = percent_rank(d2c_sales_pct),
     d2c = percent_rank(-distance_nearest_farmersmarket_mile),
@@ -422,7 +422,7 @@ fig_2_yokima <- merged_final_whatif_yokima %>%
 )
 ) + coord_equal(clip = "off") 
 
-fig_2_yokima
+fig_2_yakima
 
 ```
 
@@ -481,7 +481,7 @@ arrow_plot_02 <- ggplot() +
     "text",
     x = 0.5,
     y = 0.35,
-    label = "Moving food hubs closer to Yokima\nimproves market access",
+    label = "Moving food hubs closer to Yakima\nimproves market access",
     family = "body_font",
     size = 4,
     lineheight = 1.1,
@@ -507,7 +507,7 @@ arrow_plot_02 <- ggplot() +
 
 wrap  the plot
 ```{r echo=FALSE}
-fig_02 <- wrap_plots(fig_2_Greenville_Lee,arrow_plot_01, fig_2_lee, fig_2_Yokima_Okanogan,arrow_plot_02, fig_2_yokima, ncol = 3) +
+fig_02 <- wrap_plots(fig_2_Greenville_Lee,arrow_plot_01, fig_2_lee, fig_2_Yakima_Okanogan,arrow_plot_02, fig_2_yakima, ncol = 3) +
   plot_annotation(
     title = "From Orchard to Opportunity",
     subtitle = "Food Hubs and Small Farm Market Access at the County Level",
