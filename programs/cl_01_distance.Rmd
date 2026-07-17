@@ -2,7 +2,7 @@
 title: "cl_01_distance"
 author: "Xiaoyi Zhao"
 date: "2026-07-05"
-output: html_document
+output: pdf_document
 ---
 ## Purpose
 
@@ -57,7 +57,7 @@ cent_sample <- county_centroid %>% filter(GEOID == random_county)
 # Step 3: map the county and its centroid 
 
 
-mapview(poly_sample) + mapview(cent_sample, color = "red")
+#mapview(poly_sample) + mapview(cent_sample, color = "red")
 
 ```
 
@@ -87,7 +87,7 @@ foodhub_directory <- foodhub_raw %>%
 ```{r}
 hubs_sf <- st_as_sf(foodhub_directory, coords = c("lon", "lat"), crs = 4326)
 
-mapview(hubs_sf)
+#mapview(hubs_sf)
 
 # Also lookup which county this foodhub actually locates 
 
@@ -113,7 +113,7 @@ st_crs(hub_proj) == st_crs(county_centroid)
 distance_hub <- st_distance(county_centroid, hub_proj)
 
 # (number of counties) x (number of hubs)
-dim(distance_hub)
+#dim(distance_hub)
 ```
 
 # for each of the row in the distance matrix, identify the hub that is closest to each of the county and the distance
@@ -152,21 +152,6 @@ hub_distance_full <- hub_distance %>%
 hub_distance_full <- hub_distance_full %>%
   filter(STATEFP <= 56) %>%
   select(-STATEFP)
-```
-
-# look at the distribution of the hub
-```{r}
-hub_distance_full %>%
-  group_by(state) %>%
-  summarise(
-    n_counties = n(),
-    mean_mi    = mean(`distance_nearest_hub(mile)`),
-    median_mi  = median(`distance_nearest_hub(mile)`),
-    min_mi     = min(`distance_nearest_hub(mile)`),
-    max_mi     = max(`distance_nearest_hub(mile)`)
-  ) %>%
-  arrange(desc(mean_mi))
-
 ```
 
 ### save the dataset

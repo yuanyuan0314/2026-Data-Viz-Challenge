@@ -33,7 +33,8 @@ install.packages(packages <- c(
   "rsvg",
   "ggimage",
   "mapview",
-  "ggradar"
+  "ggradar",
+  "rnassqs"
 )
 )
 
@@ -68,6 +69,8 @@ library(readxl)
 library(units)
 library(ggradar)
 library(grid)
+library(tigris)
+library(rnassqs)
 ```
 
 
@@ -77,6 +80,7 @@ library(grid)
 
 ```{r}
 rmarkdown::render("../programs/cl_01_distance.Rmd")
+
 ```
 
 ###### 3b: calcualted the distance from the county centroid to the closest farmers' market
@@ -90,13 +94,18 @@ rmarkdown::render("../programs/cl_01_farmersmarket_distance.Rmd")
 ```{r}
 rmarkdown::render("../programs/cl_01_fame.Rmd")
 ```
-
-###### 3d: merge the datasets togehter
+###### 3d: Compute each county's fruit & nut share = (county fruit & nut sales) / (county total farm-related income receipts), using USDA-NASS data.
+(This will require the user to input their own USDA API key)
 ```{r}
-rmarkdown::render("../programs/cl_02_merge.Rmd")
+rmarkdown::render("../programs/cl_02_fruitnut_cnty.Rmd")
 ```
 
-###### 3e: Build the Index
+###### 3e: merge the datasets togehter
+```{r}
+rmarkdown::render("../programs/cl_03_merge.Rmd")
+```
+
+###### 3f: Build the Index
 ```{r}
 rmarkdown::render("../programs/an_01.Rmd")
 ```
@@ -115,6 +124,3 @@ rmarkdown::render("../programs/fig_01.Rmd")
 rmarkdown::render("../programs/fig_02.Rmd")
 ```
 
-```{r}
-rmarkdown::render("../programs/fig_02.Rmd")
-```

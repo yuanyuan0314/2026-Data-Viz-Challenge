@@ -47,7 +47,6 @@ county_centroid <- read_csv("../data/outcome/distance_SPMA_merged.csv") %>%
             all_sales, d2c_sales_pct,distance_nearest_farmersmarket_mile, share) %>%
   st_as_sf(coords = c("centroid_x", "centroid_y"), crs = 5070)  # 5070 = NAD83 Albers, in metres
 
-county_centroid
 ```
 
 Load the food hub data
@@ -169,7 +168,7 @@ county_centroid <- read_csv("../data/outcome/distance_SPMA_merged.csv") %>%
             all_sales, d2c_sales_pct,distance_nearest_farmersmarket_mile, share) %>%
   st_as_sf(coords = c("centroid_x", "centroid_y"), crs = 5070)  # 5070 = NAD83 Albers, in metres
 
-county_centroid
+
 ```
 
 Load the food hub data
