@@ -12,10 +12,6 @@ The goal of this code here is to do separate the variables needed from the index
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Load the library
-```{r}
-library(tidyverse)
-```
 
 ## Load the data
 ```{r}

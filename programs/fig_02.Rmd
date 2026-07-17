@@ -20,40 +20,13 @@ knitr::opts_chunk$set(
 3. We will plot county comparison first
 4. Then, we will plot the whatif case
 
-
-### Step 1: load the library and the merged dataset 
 \begin{itemize}
   \item The index and the factors represented in the spider graph are percentile
   \item Since local intermediate sale percentage has a lot of missing values, this county comparison use $(1-(\text{direct to consumer sales' share}))$ as the the estimation of the food hub intermediated sale 
 \end{itemize}
-```{r include=FALSE}
-library(tigris)    # downloads Census TIGER shapefiles (county boundaries)
-library(sf)        # the workhorse: stores and manipulates spatial data
-library(dplyr)     # regular data wrangling once things look like data frames
 
-library(ggplot2)
-library(mapview)
-library(readxl)
-library(readr)
-library(units)
+### Step 1: specify the font
 
-library(tidycensus)
-#to make the spider plot
-library(scales)
-
-#devtools::install_github("ricardo-bion/ggradar")
-library(ggradar)
-
-library(showtext)
-library(sysfonts)
-library(patchwork)
-library(ggtext)
-
-
-library(grid)
-```
-
-Specify the font that we want to use for the visualization
 ```{r}
 # set DM Serif Display as the font of title 
 font_add_google(
@@ -68,7 +41,6 @@ font_add_google(
 )
 
 
-
 ```
 
 ```{r include=FALSE}
@@ -77,16 +49,17 @@ state_lookup <- fips_codes %>%
   distinct(state_code, state_name)
   
 # load the merged dataset and respecify the names 
-merged_final <- read_csv("../data/outcome/merged_final_xz.csv") %>% 
-  select(county_name_hub, county_fips, spma, foodhub_inter, distance_nearest_hub_mile, distance_nearest_farmersmarket_mile, all_sales, d2c_sales_pct, foodhub_share, share) %>% 
-  rename(fruit_nut_share = share) %>% 
+merged_final <- read_csv("../data/outcome/spma_index.csv") %>% 
+  select(county_name, county_fips, SPMA_0_100, distance_nearest_hub_mile, distance_nearest_farmersmarket_mile, d2c_sales_pct, intermediated_sales_pct_derived, share) %>%
+  rename(spma = SPMA_0_100,
+    fruit_nut_share = share,
+    foodhub_share = intermediated_sales_pct_derived) %>% 
   arrange(fruit_nut_share) %>% 
   filter(county_fips != "22087",
          !is.na(fruit_nut_share)) %>% 
   mutate(state_code = substr(county_fips,1, 2)) %>% 
   left_join(state_lookup, by = "state_code") %>% 
-  mutate(county_name_hub = paste0(county_name_hub,", ", state_name))
-
+  mutate(county_name_hub = paste0(county_name,", ", state_name))
 
 ```
 \newpage
@@ -106,7 +79,6 @@ fig_2_Greenville_Lee <- merged_final %>%
   mutate(
     direct_to_consumer_share        = percent_rank(d2c_sales_pct),
     d2c = percent_rank(-distance_nearest_farmersmarket_mile),
-    foodhub_inter             = percent_rank(foodhub_inter),
     hub_proximity             = percent_rank(-distance_nearest_hub_mile),
     foodhub_share = percent_rank(foodhub_share),
     spma = percent_rank(spma),
@@ -186,7 +158,6 @@ fig_2_Yokima_Okanogan <- merged_final %>%
   mutate(
     direct_to_consumer_share        = percent_rank(d2c_sales_pct),
     d2c = percent_rank(-distance_nearest_farmersmarket_mile),
-    foodhub_inter             = percent_rank(foodhub_inter),
     hub_proximity             = percent_rank(-distance_nearest_hub_mile),
     foodhub_share = percent_rank(foodhub_share),
     spma = percent_rank(spma),
@@ -264,42 +235,16 @@ load the simulated data first
 merged_whatif_lee <- read_csv("../data/outcome/spma_index_greenville_lee.csv") %>% 
   mutate(distance_nearest_hub_mile_exchange = rev(distance_nearest_hub_mile)) %>% 
   filter(county_fips == 13177) %>% 
-  select(county_name, county_fips, SPMA_exchange_0_100, distance_nearest_hub_mile_exchange, all_sales, distance_nearest_farmersmarket_mile, all_sales, d2c_sales_pct, interm_sales, share) %>%
+  select(county_name, county_fips, SPMA_exchange_0_100, distance_nearest_hub_mile_exchange, distance_nearest_farmersmarket_mile, d2c_sales_pct, share) %>%
   mutate(foodhub_share = if_else(d2c_sales_pct >= 1, NA, 100 - d2c_sales_pct)) %>% 
   rename(distance_nearest_hub_mile = distance_nearest_hub_mile_exchange,
-         county_name_hub = county_name,
-         foodhub_inter = interm_sales,
          spma = SPMA_exchange_0_100,
          fruit_nut_share = share) %>% 
   mutate(state_code = substr(county_fips,1, 2)) %>% 
   left_join(state_lookup, by = "state_code") %>% 
-  mutate(county_name_hub = paste0(county_name_hub,", ", state_name, " (With Closer Foodhub)"))
+  mutate(county_name_hub = paste0(county_name,", ", state_name, " (With Closer Foodhub)"))
 
 merged_final_whatif_lee <- rbind(merged_final %>% filter(county_fips!= 13177), merged_whatif_lee)
-
-
-```
-
-```{r}
-
-merged_whatif_greenville <- read_csv("../data/outcome/spma_index_greenville_lee.csv") %>% 
-  mutate(distance_nearest_hub_mile_exchange = rev(distance_nearest_hub_mile)) %>% 
-  filter(county_fips == 45045) %>% 
-  select(county_name, county_fips, SPMA_2rd_0_100, distance_2rd_nearest_hub_mile, all_sales, distance_nearest_farmersmarket_mile, all_sales, d2c_sales_pct, interm_sales, share) %>%
-  mutate(foodhub_share = (100 - d2c_sales_pct)) %>% 
-  rename(distance_nearest_hub_mile = distance_2rd_nearest_hub_mile,
-         county_name_hub = county_name,
-         foodhub_inter = interm_sales,
-         spma = SPMA_2rd_0_100) %>% 
-  rename(fruit_nut_share = share) %>% 
-  arrange(fruit_nut_share) %>% 
-  filter(county_fips != "22087",
-         !is.na(fruit_nut_share)) %>% 
-  mutate(state_code = substr(county_fips,1, 2)) %>% 
-  left_join(state_lookup, by = "state_code") %>% 
-  mutate(county_name_hub = paste0(county_name_hub,", ", state_name, "(With Further Foodhub)"))
-
-merged_final_whatif_greenville <- rbind(merged_final, merged_whatif_greenville)
 
 
 ```
@@ -311,7 +256,6 @@ fig_2_lee <- merged_final_whatif_lee %>%
   mutate(
     direct_to_consumer_share        = percent_rank(d2c_sales_pct),
     d2c = percent_rank(-distance_nearest_farmersmarket_mile),
-    foodhub_inter             = percent_rank(foodhub_inter),
     hub_proximity             = percent_rank(-distance_nearest_hub_mile),
     foodhub_share = percent_rank(foodhub_share),
     spma = percent_rank(spma),
@@ -391,16 +335,14 @@ load the simulated data first
 merged_whatif_yokima <- read_csv("../data/outcome/spma_index_yakima_okanogan.csv") %>% 
   mutate(distance_nearest_hub_mile_exchange = rev(distance_nearest_hub_mile)) %>% 
   filter(county_fips == 53077) %>% 
-  select(county_name, county_fips, SPMA_exchange_0_100, distance_nearest_hub_mile_exchange, all_sales, distance_nearest_farmersmarket_mile, all_sales, d2c_sales_pct, interm_sales, share) %>%
+  select(county_name, county_fips, SPMA_exchange_0_100, distance_nearest_hub_mile_exchange, distance_nearest_farmersmarket_mile, d2c_sales_pct, share) %>%
   mutate(foodhub_share = if_else(d2c_sales_pct >= 1, NA, 100 - d2c_sales_pct)) %>% 
   rename(distance_nearest_hub_mile = distance_nearest_hub_mile_exchange,
-         county_name_hub = county_name,
-         foodhub_inter = interm_sales,
          spma = SPMA_exchange_0_100,
          fruit_nut_share = share) %>% 
   mutate(state_code = substr(county_fips,1, 2)) %>% 
   left_join(state_lookup, by = "state_code") %>% 
-  mutate(county_name_hub = paste0(county_name_hub,", ", state_name, " (With Closer Foodhub)"))
+  mutate(county_name_hub = paste0(county_name,", ", state_name, " (With Closer Foodhub)"))
 
 merged_final_whatif_yokima <- rbind(merged_final %>% filter(county_fips != 53077), merged_whatif_yokima)
 
@@ -415,7 +357,6 @@ fig_2_yokima <- merged_final_whatif_yokima %>%
   mutate(
     direct_to_consumer_share        = percent_rank(d2c_sales_pct),
     d2c = percent_rank(-distance_nearest_farmersmarket_mile),
-    foodhub_inter             = percent_rank(foodhub_inter),
     hub_proximity             = percent_rank(-distance_nearest_hub_mile),
     foodhub_share = percent_rank(foodhub_share),
     spma = percent_rank(spma),

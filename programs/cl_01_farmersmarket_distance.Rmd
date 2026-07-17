@@ -14,21 +14,6 @@ Identify the distance from the centroid of each county to the nearest farmers ma
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Load the library
-```{r}
-#install.packages("mapview")
-
-library(tigris)    # county polygons (only used below to locate each market's county)
-library(sf)        # the workhorse: stores and manipulates spatial data
-library(dplyr)     # regular data wrangling once things look like data frames
-library(readr)     # read the merged csv that carries the county centroids
-
-library(ggplot2)
-library(mapview)
-library(readxl)
-library(units)
-```
-
 ### Get the county centroids from cl_01_distance's output
 ```{r}
 names_hub <- c("rowidx", "GEOID", "state", "county_name", "distance_nearest_hub_mile",

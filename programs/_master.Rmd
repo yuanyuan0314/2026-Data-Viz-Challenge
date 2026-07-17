@@ -1,0 +1,96 @@
+---
+title: "_master"
+author: "Xiaoyi Zhao"
+date: "2026-07-17"
+output: html_document
+---
+
+## Purpose
+
+This is the master file, and only file the users technically need to run 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##### Step 1: 
+In order to replicate all the figures and output, you will open this file under the R project so that you have it under your own directory 
+
+##### Step 2: Install all the Packages and load all the libraries
+```{r}
+# you may comment this out once you installed all the required packages
+install.packages(packages <- c(
+  "sf",
+  "dplyr",
+  "ggplot2",
+  "tidyr",
+  "purrr",
+  "ggplot2",
+  "scales",
+  "tidycensus",
+  "showtext",
+  "sysfonts",
+  "rsvg",
+  "ggimage",
+  "mapview",
+  "ggradar"
+)
+)
+
+
+```
+
+```{r}
+library(tigris)    # county polygons (only used below to locate each market's county)
+library(sf)        # the workhorse: stores and manipulates spatial data
+library(dplyr)     # regular data wrangling once things look like data frames
+library(ggplot2)
+library(mapview)
+library(readxl)
+library(units)
+library(rsvg)
+library(ggimage)
+library(tidyr)
+library(purrr)
+library(scales)
+library(terra)
+library(tidycensus)
+library(readr)
+library(ggnewscale)
+library(ggtext) 
+library(showtext)
+library(sysfonts)
+library(patchwork)
+library(tidyverse)
+library(ggplot2)
+library(mapview)
+library(readxl)
+library(units)
+library(ggradar)
+library(grid)
+```
+
+
+##### Step 3: Clean the dataset 
+
+###### 3a: calcualted the distance from county centroid to the closest foodhub
+
+```{r}
+rmarkdown::render("../programs/cl_01_distance.Rmd")
+```
+
+###### 3b: calcualted the distance from the county centroid to the closest farmers' market
+
+```{r}
+rmarkdown::render("../programs/cl_01_farmersmarket_distance.Rmd")
+```
+
+###### 3c: separate the variables needed from the index from FAME
+
+```{r}
+rmarkdown::render("../programs/cl_01_fame.Rmd")
+```
+
+###### 3d: merge the datasets togehter
+```{r}
+rmarkdow

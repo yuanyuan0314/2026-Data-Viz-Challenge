@@ -14,19 +14,7 @@ The goal of this code here is to do two things
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Load the library
-```{r}
-#install.packages("mapview")
 
-library(tigris)    # downloads Census TIGER shapefiles (county boundaries)
-library(sf)        # the workhorse: stores and manipulates spatial data
-library(dplyr)     # regular data wrangling once things look like data frames
-
-library(ggplot2)
-library(mapview)
-library(readxl)
-library(units)
-```
 ### Get the centroid of each of the county
 ```{r}
 # step 1: we identify all the counities in US 

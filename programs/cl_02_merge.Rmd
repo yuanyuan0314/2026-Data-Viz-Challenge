@@ -1,5 +1,11 @@
-library(sf); library(dplyr); library(ggplot2)
+---
+title: "cl_02_merge"
+author: "Yuanyuan Wen"
+date: "2026-07-07"
+output: html_document
+---
 
+```{r}
 fruit <- readr::read_csv("../data/fruitnut_share.csv") %>%
   transmute(county_fips = sprintf("%05d", as.integer(fips)), fruitnut_sale) %>%
   filter(!is.na(fruitnut_sale))
@@ -22,3 +28,4 @@ p_fruit <- p +
     "SPMA = DTC/d_FM^2 + intermediated/d_hub^2. ",
     "Markers: 18 highest fruit/nut sales counties (2022 Census of Ag)."
   ))
+```
