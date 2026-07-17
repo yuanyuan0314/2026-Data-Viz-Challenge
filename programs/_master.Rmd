@@ -93,4 +93,28 @@ rmarkdown::render("../programs/cl_01_fame.Rmd")
 
 ###### 3d: merge the datasets togehter
 ```{r}
-rmarkdow
+rmarkdown::render("../programs/cl_02_merge.Rmd")
+```
+
+###### 3e: Build the Index
+```{r}
+rmarkdown::render("../programs/an_01.Rmd")
+```
+###### 3f: Build the Index for whatif cases used in the fig_02
+```{r}
+rmarkdown::render("../programs/an_02_spma_simulation.Rmd")
+```
+
+##### Step 4: Build the Visualization
+
+```{r}
+rmarkdown::render("../programs/fig_01.Rmd")
+```
+
+```{r}
+rmarkdown::render("../programs/fig_02.Rmd")
+```
+
+```{r}
+rmarkdown::render("../programs/fig_02.Rmd")
+```
