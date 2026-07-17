@@ -79,8 +79,9 @@ Paths are relative, so each file must be knit from its own directory.
 | `cl_01_farmersmarket_distance.Rmd` | Nearest farmers market distance, reusing those centroids → `farmersmarket_distance_full.csv` |
 | `cl_02_merge.Rmd` | Joins the three cleaned tables → `distance_SPMA_merged.csv` |
 | `an_01.Rmd` | Builds the SPMA index → `spma_index.csv` |
-| `an_02.Rmd` | National choropleth → `fig_01.pdf` |
-| `an_03.Rmd` | County-pair spider charts → `fig_02.pdf` |
+| `an_02_spma_simulation.Rmd` | Builds the SPMA index for county comparisons → `spma_index_greenville_lee.csv` \& `spma_index_yakima_okanogan.csv`|
+| `fig_01.Rmd` | National choropleth → `fig_01.pdf` |
+| `fig_02.Rmd` | County-pair spider charts → `fig_02.pdf` |
 
 Data flows one direction: `data/source/` → `cl_*` → `data/outcome/` → `an_*` →
 `figures/`.
@@ -89,7 +90,9 @@ Data flows one direction: `data/source/` → `cl_*` → `data/outcome/` → `an_
 
 ## 3. Data transformations
 
-### 3.1 Reshaping FAME — `cl_01_fame.Rmd`
+### 3.1 Reshaping FAME
+
+*Source file: `cl_01_fame.Rmd`*
 
 FAME arrives in long format: one row per county, per variable, per year, so before we
 can use it, it has to become one row per county.
@@ -106,7 +109,9 @@ can use it, it has to become one row per county.
 
 → `data/outcome/fame_variables.csv`
 
-### 3.2 Distances — `cl_01_distance.Rmd`, `cl_01_farmersmarket_distance.Rmd`
+### 3.2 Distances 
+
+*Source files: `cl_01_distance.Rmd` and `cl_01_farmersmarket_distance.Rmd`*
 
 These two scripts answer one question for every county: **how far would a producer have
 to travel to reach the nearest farmers market, and the nearest food hub?**
@@ -146,6 +151,8 @@ distances are measured from exactly the same starting points.
 → `data/outcome/hub_distance_full.csv`, `data/outcome/farmersmarket_distance_full.csv`
 
 ### 3.3 Putting it together — `cl_02_merge.Rmd`
+
+*Source files: `cl_02_merge.Rmd`*
 
 Three cleaned tables become one analysis table, joined on the county's 5-digit FIPS
 code:
