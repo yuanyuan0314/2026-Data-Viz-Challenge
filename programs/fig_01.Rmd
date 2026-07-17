@@ -234,9 +234,9 @@ fig_01c_annotated <- ggplot(map_df) +
   geom_sf(
   data = hubs_pts,
   shape = 21,
-  fill = "#86EFAC",
+  fill = "#c8ff88",
   color = "#15803D",
-  size = 2,
+  size = 2.4,
   stroke = 0.4,
   alpha = 0.85
 ) +
@@ -340,7 +340,7 @@ notes_panel <- ggplot() +
     y = 0.75,
     yend = 0.96,
     linewidth = 1.4,
-    color = "#FFD23F"
+    color = "#c8ff88"
   ) +
   annotate(
     "text",

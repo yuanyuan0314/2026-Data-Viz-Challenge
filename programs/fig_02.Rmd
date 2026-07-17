@@ -49,6 +49,8 @@ library(sysfonts)
 library(patchwork)
 library(ggtext)
 
+
+library(grid)
 ```
 
 Specify the font that we want to use for the visualization
@@ -65,9 +67,7 @@ font_add_google(
   family = "body_font"
 )
 
-# we need to keep this open so that the figure can show the 
-# customized fonts above
-showtext::showtext_auto(TRUE)
+
 
 ```
 
@@ -78,7 +78,7 @@ state_lookup <- fips_codes %>%
   
 # load the merged dataset and respecify the names 
 merged_final <- read_csv("../data/outcome/merged_final_xz.csv") %>% 
-  select(county_name_hub, county_fips, spma, direct_to_consumer, foodhub_inter, distance_nearest_hub_mile, all_sales, distance_nearest_farmersmarket_mile, all_sales, d2c_sales_pct, foodhub_share, share) %>% 
+  select(county_name_hub, county_fips, spma, foodhub_inter, distance_nearest_hub_mile, distance_nearest_farmersmarket_mile, all_sales, d2c_sales_pct, foodhub_share, share) %>% 
   rename(fruit_nut_share = share) %>% 
   arrange(fruit_nut_share) %>% 
   filter(county_fips != "22087",
@@ -98,6 +98,9 @@ merged_final <- read_csv("../data/outcome/merged_final_xz.csv") %>%
 The Fips we identified are 
 ```{r echo=FALSE, fig.width= 12, fig.height= 5}
 
+# we need to keep this open so that the figure can show the 
+# customized fonts above
+showtext::showtext_auto(TRUE)
 
 fig_2_Greenville_Lee <- merged_final %>%
   mutate(
@@ -113,13 +116,13 @@ fig_2_Greenville_Lee <- merged_final %>%
   select(group = county_name_hub,
          `Direct To \nConsumer Share` = direct_to_consumer_share,
          `Close to \nFOODHUB`= hub_proximity,
-         `Close to \nFarmer's Market` = d2c,
+         `Close to \nFarmer's \nMarket` = d2c,
          `Foodhub Intermediated Share` = foodhub_share,
          `SPMA` = spma,
          `Fruit Nut Share` = fruit_nut_share) %>%
   ggradar(font.radar = "roboto",
           values.radar   = c("0", "50", "100"),
-          group.colours  = c("#3182BD", "#FFD23F"),
+          group.colours  = c("#013e75", "#b05b24"),
           grid.label.size = 5,
           axis.label.size = 4,
           axis.label.offset = 1.2,
@@ -127,9 +130,6 @@ fig_2_Greenville_Lee <- merged_final %>%
           gridline.mid.colour = "#60A5FA",
           gridline.max.colour = "#1E3A8A") +
   theme_void(base_family = "body_font") +
-  labs(
-    title = "From Orchard to Opportunity",
-    subtitle = "Food Hubs and Small Farm Market Access at the County Level") +
   theme(
     plot.background = element_rect(
       fill = "#FAF8F2",
@@ -159,10 +159,10 @@ fig_2_Greenville_Lee <- merged_final %>%
       margin = margin(b = 12)
     ),
 
-    legend.position = "bottom",
-    legend.direction = "horizontal",
-    legend.key.width = unit(2.5, "cm"),
-    legend.key.height = unit(0.28, "cm"),
+    legend.position = "left",
+    legend.direction = "vertical",
+    legend.key.width = unit(2, "cm"),
+    legend.key.height = unit(0.14, "cm"),
 
     plot.margin = margin(
   t = 10,
@@ -176,6 +176,437 @@ fig_2_Greenville_Lee
 
 ```
 
-### Step 3: Plot the graph over its whatif case
+**Yokima, WA  v.s. Okanogan, WA**
+
+The Fips we identified are 
+```{r echo=FALSE, fig.width= 12, fig.height= 5}
 
 
+fig_2_Yokima_Okanogan <- merged_final %>%
+  mutate(
+    direct_to_consumer_share        = percent_rank(d2c_sales_pct),
+    d2c = percent_rank(-distance_nearest_farmersmarket_mile),
+    foodhub_inter             = percent_rank(foodhub_inter),
+    hub_proximity             = percent_rank(-distance_nearest_hub_mile),
+    foodhub_share = percent_rank(foodhub_share),
+    spma = percent_rank(spma),
+    fruit_nut_share = percent_rank(fruit_nut_share)
+  ) %>%
+  filter(county_fips %in%  c("53077", "53047")) %>%
+  select(group = county_name_hub,
+         `Direct To \nConsumer Share` = direct_to_consumer_share,
+         `Close to \nFOODHUB`= hub_proximity,
+         `Close to \nFarmer's \nMarket` = d2c,
+         `Foodhub Intermediated Share` = foodhub_share,
+         `SPMA` = spma,
+         `Fruit Nut Share` = fruit_nut_share) %>%
+  ggradar(font.radar = "roboto",
+          values.radar   = c("0", "50", "100"),
+          group.colours  = c("#013e75", "#b05b24"),
+          grid.label.size = 5,
+          axis.label.size = 4,
+          axis.label.offset = 1.2,
+          gridline.min.colour = "#BFDBFE",
+          gridline.mid.colour = "#60A5FA",
+          gridline.max.colour = "#1E3A8A") +
+  theme_void(base_family = "body_font")  +
+  theme(
+    plot.background = element_rect(
+      fill = "#FAF8F2",
+      color = NA
+    ),
+    panel.background = element_rect(
+      fill = "#FAF8F2",
+      color = NA
+    ),
+
+    plot.title = element_text(
+      family = "title_font",
+      size = 25,
+      lineheight = 0.88,
+      color = "#123B65",
+      face = "plain",
+      hjust = 0,
+      margin = margin(b = 10)
+    ),
+
+    plot.subtitle = element_text(
+      family = "body_font",
+      size = 10,
+      lineheight = 1.2,
+      color = "#4B5D6D",
+      hjust = 0,
+      margin = margin(b = 12)
+    ),
+
+    legend.position = "left",
+    legend.direction = "vertical",
+    legend.key.width = unit(2, "cm"),
+    legend.key.height = unit(0.14, "cm"),
+
+    plot.margin = margin(
+  t = 10,
+  r = 10,
+  b = 10,
+  l = 10
+)
+) + coord_equal(clip = "off")
+
+fig_2_Yokima_Okanogan
+
+```
+
+### Step 3: Plot the graph over its whatif case 1
+
+load the simulated data first 
+```{r}
+
+merged_whatif_lee <- read_csv("../data/outcome/spma_index_greenville_lee.csv") %>% 
+  mutate(distance_nearest_hub_mile_exchange = rev(distance_nearest_hub_mile)) %>% 
+  filter(county_fips == 13177) %>% 
+  select(county_name, county_fips, SPMA_exchange_0_100, distance_nearest_hub_mile_exchange, all_sales, distance_nearest_farmersmarket_mile, all_sales, d2c_sales_pct, interm_sales, share) %>%
+  mutate(foodhub_share = if_else(d2c_sales_pct >= 1, NA, 100 - d2c_sales_pct)) %>% 
+  rename(distance_nearest_hub_mile = distance_nearest_hub_mile_exchange,
+         county_name_hub = county_name,
+         foodhub_inter = interm_sales,
+         spma = SPMA_exchange_0_100,
+         fruit_nut_share = share) %>% 
+  mutate(state_code = substr(county_fips,1, 2)) %>% 
+  left_join(state_lookup, by = "state_code") %>% 
+  mutate(county_name_hub = paste0(county_name_hub,", ", state_name, " (With Closer Foodhub)"))
+
+merged_final_whatif_lee <- rbind(merged_final %>% filter(county_fips!= 13177), merged_whatif_lee)
+
+
+```
+
+```{r}
+
+merged_whatif_greenville <- read_csv("../data/outcome/spma_index_greenville_lee.csv") %>% 
+  mutate(distance_nearest_hub_mile_exchange = rev(distance_nearest_hub_mile)) %>% 
+  filter(county_fips == 45045) %>% 
+  select(county_name, county_fips, SPMA_2rd_0_100, distance_2rd_nearest_hub_mile, all_sales, distance_nearest_farmersmarket_mile, all_sales, d2c_sales_pct, interm_sales, share) %>%
+  mutate(foodhub_share = (100 - d2c_sales_pct)) %>% 
+  rename(distance_nearest_hub_mile = distance_2rd_nearest_hub_mile,
+         county_name_hub = county_name,
+         foodhub_inter = interm_sales,
+         spma = SPMA_2rd_0_100) %>% 
+  rename(fruit_nut_share = share) %>% 
+  arrange(fruit_nut_share) %>% 
+  filter(county_fips != "22087",
+         !is.na(fruit_nut_share)) %>% 
+  mutate(state_code = substr(county_fips,1, 2)) %>% 
+  left_join(state_lookup, by = "state_code") %>% 
+  mutate(county_name_hub = paste0(county_name_hub,", ", state_name, "(With Further Foodhub)"))
+
+merged_final_whatif_greenville <- rbind(merged_final, merged_whatif_greenville)
+
+
+```
+
+```{r echo=FALSE, fig.width= 12, fig.height= 5}
+
+
+fig_2_lee <- merged_final_whatif_lee %>%
+  mutate(
+    direct_to_consumer_share        = percent_rank(d2c_sales_pct),
+    d2c = percent_rank(-distance_nearest_farmersmarket_mile),
+    foodhub_inter             = percent_rank(foodhub_inter),
+    hub_proximity             = percent_rank(-distance_nearest_hub_mile),
+    foodhub_share = percent_rank(foodhub_share),
+    spma = percent_rank(spma),
+    fruit_nut_share = percent_rank(fruit_nut_share)
+  ) %>%
+  filter(county_fips %in% c("13177", "45045")) %>%
+  select(group = county_name_hub,
+         `Direct To \nConsumer Share` = direct_to_consumer_share,
+         `Close to \nFOODHUB`= hub_proximity,
+         `Close to \nFarmer's \nMarket` = d2c,
+         `Foodhub Intermediated Share` = foodhub_share,
+         `SPMA` = spma,
+         `Fruit Nut Share` = fruit_nut_share) %>%
+  ggradar(font.radar = "roboto",
+          values.radar   = c("0", "50", "100"),
+          group.colours  = c("#013e75", "#a42423"),
+          grid.label.size = 5,
+          axis.label.size = 4,
+          axis.label.offset = 1.2,
+           gridline.min.colour = "#BFDBFE",
+          gridline.mid.colour = "#60A5FA",
+          gridline.max.colour = "#1E3A8A") +
+  theme_void(base_family = "body_font") +
+  theme(
+    plot.background = element_rect(
+      fill = "#FAF8F2",
+      color = NA
+    ),
+    panel.background = element_rect(
+      fill = "#FAF8F2",
+      color = NA
+    ),
+    plot.title = element_text(
+      family = "title_font",
+      size = 20,
+      lineheight = 0.88,
+      color = "#15803D",
+      face = "plain",
+      hjust = 0,
+      margin = margin(b = 8)
+    ),
+
+    plot.subtitle = element_text(
+      family = "title_font",
+      size = 20,
+      lineheight = 1.2,
+      color = "#15803D",
+      hjust = 0,
+      margin = margin(b = 12,
+                      l = 50)
+    ),
+
+    legend.position = "right",
+    legend.direction = "vertical",
+    legend.key.width = unit(2, "cm"),
+    legend.key.height = unit(0.14, "cm"),
+
+    plot.margin = margin(
+  t = 10,
+  r = 10,
+  b = 10,
+  l = 10
+)
+) + coord_equal(clip = "off") 
+
+fig_2_lee
+
+```
+
+
+
+### Step 4: Plot the graph over its whatif case 2: Yokima vs Okanogan in WA
+
+load the simulated data first 
+```{r}
+
+merged_whatif_yokima <- read_csv("../data/outcome/spma_index_yakima_okanogan.csv") %>% 
+  mutate(distance_nearest_hub_mile_exchange = rev(distance_nearest_hub_mile)) %>% 
+  filter(county_fips == 53077) %>% 
+  select(county_name, county_fips, SPMA_exchange_0_100, distance_nearest_hub_mile_exchange, all_sales, distance_nearest_farmersmarket_mile, all_sales, d2c_sales_pct, interm_sales, share) %>%
+  mutate(foodhub_share = if_else(d2c_sales_pct >= 1, NA, 100 - d2c_sales_pct)) %>% 
+  rename(distance_nearest_hub_mile = distance_nearest_hub_mile_exchange,
+         county_name_hub = county_name,
+         foodhub_inter = interm_sales,
+         spma = SPMA_exchange_0_100,
+         fruit_nut_share = share) %>% 
+  mutate(state_code = substr(county_fips,1, 2)) %>% 
+  left_join(state_lookup, by = "state_code") %>% 
+  mutate(county_name_hub = paste0(county_name_hub,", ", state_name, " (With Closer Foodhub)"))
+
+merged_final_whatif_yokima <- rbind(merged_final %>% filter(county_fips != 53077), merged_whatif_yokima)
+
+
+```
+
+
+```{r echo=FALSE, fig.width= 12, fig.height= 5}
+
+
+fig_2_yokima <- merged_final_whatif_yokima %>%
+  mutate(
+    direct_to_consumer_share        = percent_rank(d2c_sales_pct),
+    d2c = percent_rank(-distance_nearest_farmersmarket_mile),
+    foodhub_inter             = percent_rank(foodhub_inter),
+    hub_proximity             = percent_rank(-distance_nearest_hub_mile),
+    foodhub_share = percent_rank(foodhub_share),
+    spma = percent_rank(spma),
+    fruit_nut_share = percent_rank(fruit_nut_share)
+  ) %>%
+  filter(county_fips %in% c("53077", "53047")) %>%
+  select(group = county_name_hub,
+         `Direct To \nConsumer Share` = direct_to_consumer_share,
+         `Close to \nFOODHUB`= hub_proximity,
+         `Close to \nFarmer's \nMarket` = d2c,
+         `Foodhub Intermediated Share` = foodhub_share,
+         `SPMA` = spma,
+         `Fruit Nut Share` = fruit_nut_share) %>%
+  ggradar(font.radar = "roboto",
+          values.radar   = c("0", "50", "100"),
+          group.colours  = c("#013e75", "#a42423"),
+          grid.label.size = 5,
+          axis.label.size = 4,
+          axis.label.offset = 1.2,
+          gridline.min.colour = "#BFDBFE",
+          gridline.mid.colour = "#60A5FA",
+          gridline.max.colour = "#1E3A8A") +
+  theme_void(base_family = "body_font")  +
+  theme(
+    plot.background = element_rect(
+      fill = "#FAF8F2",
+      color = NA
+    ),
+    panel.background = element_rect(
+      fill = "#FAF8F2",
+      color = NA
+    ),
+
+    plot.title = element_text(
+      family = "title_font",
+      size = 25,
+      lineheight = 0.88,
+      color = "#123B65",
+      face = "plain",
+      hjust = 0,
+      margin = margin(b = 10)
+    ),
+
+    plot.subtitle = element_text(
+      family = "body_font",
+      size = 10,
+      lineheight = 1.2,
+      color = "#4B5D6D",
+      hjust = 0,
+      margin = margin(b = 12)
+    ),
+
+    legend.position = "right",
+    legend.direction = "vertical",
+    legend.key.width = unit(2, "cm"),
+    legend.key.height = unit(0.14, "cm"),
+
+    plot.margin = margin(
+  t = 10,
+  r = 10,
+  b = 10,
+  l = 10
+)
+) + coord_equal(clip = "off") 
+
+fig_2_yokima
+
+```
+
+add the figure for arrows between the figures
+```{r}
+arrow_plot_01 <- ggplot() +
+  annotate(
+    "segment",
+    x = 0.35, xend = 0.58,   # shorter arrow
+    y = 0.62, yend = 0.62,
+    linewidth = 1.3,
+    color = "#123B65",
+    arrow = arrow(
+      type = "closed",
+      length = unit(0.12, "inches")
+    )
+  ) +
+  annotate(
+    "text",
+    x = 0.5,
+    y = 0.35,
+    label = "Moving food hubs closer to Lee\nimproves market access",
+    family = "body_font",
+    size = 4,
+    lineheight = 1.1,
+    color = "grey30",
+    hjust = 0.5
+  ) +
+  xlim(0, 1) +
+  ylim(0, 1) +
+  theme_void() +
+  theme(
+    plot.background = element_rect(
+      fill = "#faf8f2",
+      color = NA
+    ),
+    panel.background = element_rect(
+      fill = "#faf8f2",
+      color = NA
+    )
+  )
+
+arrow_plot_02 <- ggplot() +
+  annotate(
+    "segment",
+    x = 0.35, xend = 0.58,   # shorter arrow
+    y = 0.62, yend = 0.62,
+    linewidth = 1.3,
+    color = "#123B65",
+    arrow = arrow(
+      type = "closed",
+      length = unit(0.12, "inches")
+    )
+  ) +
+  annotate(
+    "text",
+    x = 0.5,
+    y = 0.35,
+    label = "Moving food hubs closer to Yokima\nimproves market access",
+    family = "body_font",
+    size = 4,
+    lineheight = 1.1,
+    color = "grey30",
+    hjust = 0.5
+  ) +
+  xlim(0, 1) +
+  ylim(0, 1) +
+  theme_void() +
+  theme(
+    plot.background = element_rect(
+      fill = "#faf8f2",
+      color = NA
+    ),
+    panel.background = element_rect(
+      fill = "#faf8f2",
+      color = NA
+    )
+  )
+
+```
+
+
+wrap  the plot
+```{r echo=FALSE}
+fig_02 <- wrap_plots(fig_2_Greenville_Lee,arrow_plot_01, fig_2_lee, fig_2_Yokima_Okanogan,arrow_plot_02, fig_2_yokima, ncol = 3) +
+  plot_annotation(
+    title = "From Orchard to Opportunity",
+    subtitle = "Food Hubs and Small Farm Market Access at the County Level",
+    theme = theme(
+      plot.background = element_rect(
+        fill = "#FAF8F2",
+        color = NA
+      ),
+
+      plot.title = element_text(
+        family = "title_font",
+        size = 25,
+        lineheight = 0.88,
+        color = "#123B65",
+        face = "plain",
+        hjust = 0.5,
+        margin = margin(b = 10)
+      ),
+
+      plot.subtitle = element_text(
+        family = "body_font",
+        size = 10,
+        lineheight = 1.2,
+        color = "#4B5D6D",
+        hjust = 0.5,
+        margin = margin(b = 12)
+      ),
+
+      plot.margin = margin(
+        t = 10,
+        r = 10,
+        b = 10,
+        l = 10
+      )
+    )
+  )
+  
+
+```
+```{r}
+ggsave("../figures/fig_02.pdf", plot = fig_02, width = 20, height = 8)
+
+```

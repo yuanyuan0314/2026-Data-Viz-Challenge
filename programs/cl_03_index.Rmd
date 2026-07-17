@@ -45,9 +45,7 @@ step 2: build the index for the direct to consumer sale
 we use the squared distance to the neared farmer's market as the weight when we evaluate the travel cost to the nearest farmer's market
 ```{r}
 merged_i <- merged %>% 
-  mutate(
-    d2c_sales_pct = d2c_sales_pct/100,
-    direct_to_consumer = (all_sales * d2c_sales_pct)/(distance_nearest_farmersmarket_mile^2)) 
+  mutate(direct_to_consumer = (all_sales * d2c_sales_pct/100)/(distance_nearest_farmersmarket_mile^2)) 
 ```
 
 
@@ -58,8 +56,10 @@ Note: in here, we do set an assumption that if the sales from the d2c succeed 1,
 merged_i <- merged_i %>% 
   mutate( 
     foodhub_present = !is.na(number_foodhub) & number_foodhub > 0,
-    foodhub_share = if_else(d2c_sales_pct >= 1, NA, 100 - d2c_sales_pct)) %>% 
-  mutate(foodhub_inter = all_sales * foodhub_share/(distance_nearest_hub_mile^2))
+    foodhub_share = if_else(d2c_sales_pct >= 100, NA, 100 - d2c_sales_pct)) %>% 
+  mutate(
+    interm_sales = all_sales * (100 - d2c_sales_pct)/100,
+    foodhub_inter = interm_sales/(distance_nearest_hub_mile^2))
 ```
 
 step 3 : add two index together 
