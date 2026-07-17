@@ -1,6 +1,6 @@
 ---
 title: "an_01b_spma_index"
-author: "Pragati Dahal"
+author: "Pragati Dahal, Yuanyuan Wen"
 date: "2026-07-15"
 output: html_document
 ---
@@ -56,7 +56,7 @@ dat <- read_csv("../data/outcome/distance_SPMA_merged.csv") %>%
 ### Step 2 — derive intermediated sales share from DTC share
 `d2c_sales_pct` and `all_sales` have the fewest missing values of any of the sales
 variables, so rather than relying on the sparser `intermediated_sales_pct` column
-directly, we back it out as the complement of DTC: `1 - d2c_sales_pct`. 
+directly, we back it out as the complement of DTC: `100 - d2c_sales_pct`. 
 Two observations have `d2c_sales_pct`>100 (James City, VA and Rockdale, GA) and are assigned NA.
 ```{r}
 dat <- dat %>%
