@@ -1,4 +1,4 @@
-# Fruit and Tree Nut: From Branch to Buyer
+# Fruit and Tree Nut: From Orchard to Opportunity
 
 **Small-Producer Market Access (SPMA) Index**\
 2026 USDA AMS × AAEA GSS Data Visualization Challenge
