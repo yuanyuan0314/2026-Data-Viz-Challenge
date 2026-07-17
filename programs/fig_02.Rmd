@@ -87,9 +87,9 @@ fig_2_Greenville_Lee <- merged_final %>%
   filter(county_fips %in%  c("45045", "13177")) %>%
   select(group = county_name_hub,
          `Direct To \nConsumer Share` = direct_to_consumer_share,
-         `Close to \nFOODHUB`= hub_proximity,
+         `Close to \nFOOD HUB`= hub_proximity,
          `Close to \nFarmer's \nMarket` = d2c,
-         `Foodhub Intermediated Share` = foodhub_share,
+         `Food hub Intermediated Share` = foodhub_share,
          `SPMA` = spma,
          `Fruit Nut Share` = fruit_nut_share) %>%
   ggradar(font.radar = "roboto",
@@ -166,9 +166,9 @@ fig_2_Yakima_Okanogan <- merged_final %>%
   filter(county_fips %in%  c("53077", "53047")) %>%
   select(group = county_name_hub,
          `Direct To \nConsumer Share` = direct_to_consumer_share,
-         `Close to \nFOODHUB`= hub_proximity,
+         `Close to \nFOOD HUB`= hub_proximity,
          `Close to \nFarmer's \nMarket` = d2c,
-         `Foodhub Intermediated Share` = foodhub_share,
+         `Food hub Intermediated Share` = foodhub_share,
          `SPMA` = spma,
          `Fruit Nut Share` = fruit_nut_share) %>%
   ggradar(font.radar = "roboto",
@@ -264,9 +264,9 @@ fig_2_lee <- merged_final_whatif_lee %>%
   filter(county_fips %in% c("13177", "45045")) %>%
   select(group = county_name_hub,
          `Direct To \nConsumer Share` = direct_to_consumer_share,
-         `Close to \nFOODHUB`= hub_proximity,
+         `Close to \nFOOD HUB`= hub_proximity,
          `Close to \nFarmer's \nMarket` = d2c,
-         `Foodhub Intermediated Share` = foodhub_share,
+         `Food hub Intermediated Share` = foodhub_share,
          `SPMA` = spma,
          `Fruit Nut Share` = fruit_nut_share) %>%
   ggradar(font.radar = "roboto",
@@ -365,9 +365,9 @@ fig_2_yakima <- merged_final_whatif_yakima %>%
   filter(county_fips %in% c("53077", "53047")) %>%
   select(group = county_name_hub,
          `Direct To \nConsumer Share` = direct_to_consumer_share,
-         `Close to \nFOODHUB`= hub_proximity,
+         `Close to \nFOOD HUB`= hub_proximity,
          `Close to \nFarmer's \nMarket` = d2c,
-         `Foodhub Intermediated Share` = foodhub_share,
+         `Food hub Intermediated Share` = foodhub_share,
          `SPMA` = spma,
          `Fruit Nut Share` = fruit_nut_share) %>%
   ggradar(font.radar = "roboto",
