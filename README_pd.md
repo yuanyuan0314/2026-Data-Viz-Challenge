@@ -48,7 +48,7 @@ Raw inputs are in `data/source/`. They are read but never modified by our code.
 
 | Source | File | What it contains | Why it matters |
 |---|---|---|---|
-| **FAME 2.0 Master Data** | `FAME_MasterData_Feb2026.csv` | Long-format county panel: one row per county × variable × year. | Core dataset for the challenge. Supplies every non-spatial input to the index. |
+| **FAME 2.0 Master Data** | `FAME_MasterData_Feb2026.csv` | Long-format county panel: one row per county × variable × year. We extract 23 variables covering farm sales, sales-channel shares, outlet counts, and county characteristics. | Core dataset for the challenge. Supplies every non-spatial input to the index. |
 | **USDA AMS Food Hub Directory** | `foodhub_2026-75161420.xlsx` | Point-level directory of US food hubs. | Hub coordinates produce $d^{\text{Hub}}$, denominator of the intermediated-sales term, and the point overlay on the choropleth. |
 | **USDA AMS Farmers Market Directory** | `farmersmarket_2026-623143939.xlsx` | Point-level directory of US farmers markets. | Market coordinates produce $d^{\text{FM}}$, denominator of the direct-to-consumer term. |
 | **Census TIGER/Line** (2023) | *not committed — pulled at runtime* | 2023 cartographic-boundary county and state polygons. | County polygons give the centroids anchoring every distance calculation, the `GEOID` that joins spatial data to FAME `fips`, and the map geometry. |
@@ -161,6 +161,26 @@ the join. The result is 3,144 counties by 46 columns.
 
 → `data/outcome/distance_SPMA_merged.csv`
 
+### 3.4 Filling gaps in the sales shares
+
+To split a county's sales into "sold direct to consumers" and "sold through an
+intermediary," the natural columns are `d2c_sales_pct` and `intermediated_sales_pct`.
+The problem: `intermediated_sales_pct` is missing for a large share of counties, while
+`d2c_sales_pct` and `all_sales` are among the best-populated variables in FAME.
+
+**So we treat everything not sold direct-to-consumer as intermediated**, that is, we
+compute the intermediated share as `100 − d2c_sales_pct` rather than reading the sparse
+column directly.
+
+This buys us far more usable counties, and it costs precision: sales that went to a
+distant wholesaler, not a local food hub, get counted in the intermediated bucket too.
+In counties with large commodity operations, this overstates the sales a food hub could
+plausibly be handling.
+
+**One more wrinkle:** a handful of counties report a direct-to-consumer share above 100%
+in FAME data, which is impossible and would produce a negative intermediated share.
+Those counties are set to missing and drop out of the index.
+
 ***
 
 
@@ -173,6 +193,14 @@ the join. The result is 3,144 counties by 46 columns.
 3. Divide each by the squared distance to its matching outlet, i.e. DTC by the farmers
    market distance, intermediated by the food hub distance.
 4. Add the two together. That sum is SPMA.
+
+Counties missing the direct-to-consumer piece are dropped.
+
+**Why the map is drawn on a log scale.** Raw SPMA is dollars divided by squared miles,
+so it spans more than ten orders of magnitude: a dense county with high sales and a hub
+next door is thousands of times larger than a remote one. Plotted untransformed, the map
+is one dark dot on an otherwise blank field. So for display we take `log(SPMA + 1)`,
+rescale to a 0–100 range, and cap the color scale at the 95th percentile.
 
 → `data/outcome/spma_index.csv`
 
@@ -199,7 +227,7 @@ actually are. Turning the index table into that map takes a few steps:
    main driver at the same time: dark counties tend to sit near clusters of dots.
 
 5. **Shade the counties.** Fill color comes from the 0–100 rescaled index described in
-   4.1, on a light-to-dark blue scale, with the scale capped at the 95th percentile.
+   §4.1, on a light-to-dark blue scale, with the scale capped at the 95th percentile.
 
 → `figures/fig_01.pdf`
 
@@ -245,12 +273,13 @@ install.packages(c(
 devtools::install_github("ricardo-bion/ggradar")   # not on CRAN
 ```
 
-A free NASS QuickStats API key is also needed to pull the fruit/nut share data.
+A free NASS QuickStats API key is also needed to pull the fruit/nut share data
+(see §1).
 
 **Steps**
 
 1. Clone the fork, open `2026-Data-Viz-Challenge-main.Rproj`, and confirm `data/source/`
-   holds the raw inputs from 1.
+   holds the raw inputs from §1.
 2. Set `options(tigris_use_cache = TRUE)` so boundaries download only once.
 3. Knit in order:
 
@@ -272,8 +301,3 @@ A free NASS QuickStats API key is also needed to pull the fruit/nut share data.
 ***
 
 ## 6. Use of generative AI
-
-We used generative AI (Claude) as a general-purpose coding assistant: tidying and 
-reorganizing R code, resolving errors, and editing documentation. It was not used 
-to design the index, select variables, or interpret results. 
-All outputs were reviewed and verified by the authors.
