@@ -338,5 +338,10 @@ We used generative AI (Claude) as a general-purpose coding assistant: tidying an
 resolving errors, and editing documentation. It was not used to design the index, select variables, or interpret results. 
 All outputs were reviewed and verified by the authors.
 
-## 7. Cite Us
+## 7. Reference
+Barham, J., Tropp, D., Enterline, K., Farbman, J., Fisk, J., & Kiraly, S. (2012). Regional food hub resource guide.
+Campbell, J., & Bir, C. (2024). Food hubs: Considerations for beginning farmers and ranchers.
+Hansen, W. G. (1959). How accessibility shapes land use. Journal of the American Institute of planners, 25(2), 73-76
+
+## 8. Cite Us
 Xiaoyi Zhao, Pragati Dahal, Yuanyuan Wen. (2026). **From Orchard to Opportunity: Food Hubs and Small Farm Market Access**, (Version 1.0). 2026 Data Viz Challenge. https://github.com/yuanyuan0314/2026-Data-Viz-Challenge
