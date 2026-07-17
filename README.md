@@ -339,8 +339,10 @@ resolving errors, and editing documentation. It was not used to design the index
 All outputs were reviewed and verified by the authors.
 
 ## 7. Reference
-Barham, J., Tropp, D., Enterline, K., Farbman, J., Fisk, J., & Kiraly, S. (2012). Regional food hub resource guide. \n
-Campbell, J., & Bir, C. (2024). Food hubs: Considerations for beginning farmers and ranchers. \n
+Barham, J., Tropp, D., Enterline, K., Farbman, J., Fisk, J., & Kiraly, S. (2012). Regional food hub resource guide. 
+
+Campbell, J., & Bir, C. (2024). Food hubs: Considerations for beginning farmers and ranchers. 
+
 Hansen, W. G. (1959). How accessibility shapes land use. Journal of the American Institute of planners, 25(2), 73-76
 
 ## 8. Cite Us
