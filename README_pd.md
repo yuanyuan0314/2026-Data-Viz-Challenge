@@ -116,11 +116,9 @@ can use it, it has to become one row per county.
 These two scripts answer one question for every county: **how far would a producer have
 to travel to reach the nearest farmers market, and the nearest food hub?**
 
-1. **Find a point for each county.** Download 2023 county boundaries and take the
-   centroid of each one. Producer locations are not public, so the centroid stands in
-   for the "average" farm in the county.
+1. **Represent each county with a geographic reference point:** Using 2023 county boundary data, we calculate the centroid of each county. Because individual producer locations are not publicly available, the county centroid serves as a consistent proxy for the location of a representative farm.
 
-2. **Put everything on the same map.** Counties and directory listings are converted to
+2. **Using a consistent projection on the map:** Counties and directory listings are converted to
    a common projection — EPSG:5070, an equal-area projection measured in metres and
    designed for the continental US. Distances are only meaningful once both layers sit
    in the same coordinate system. Listings with missing coordinates are dropped.
@@ -150,7 +148,7 @@ distances are measured from exactly the same starting points.
 
 → `data/outcome/hub_distance_full.csv`, `data/outcome/farmersmarket_distance_full.csv`
 
-### 3.3 Putting it together — `cl_02_merge.Rmd`
+### 3.3 Putting it together
 
 *Source files: `cl_02_merge.Rmd`*
 
@@ -193,7 +191,9 @@ Those counties are set to missing and drop out of the index.
 
 ## 4. Building our deliverables
 
-### 4.1 Building the index — `an_01.Rmd`
+### 4.1 Building the index 
+
+*Source files: `an_01.Rmd`*
 
 1. Convert the direct-to-consumer percentage into a proportion.
 2. Split total sales into the two channels: DTC sales and intermediated sales.
@@ -211,7 +211,28 @@ rescale to a 0–100 range, and cap the color scale at the 95th percentile.
 
 → `data/outcome/spma_index.csv`
 
-### 4.2 Preparing the choropleth map — `an_02.Rmd`
+### 4.2 Setting Up the County Comparison Simulation
+
+*Source files: `an_02_spma_simulation.Rmd`*
+
+In `data/outcome/spma_index.csv`, We identify two pairs of counties with high shares of fruit and tree nut production:
+
+1. **Yakima, WA v.s. Okanogan, WA**
+2. **Greenville, SC v.s. Lee, GA**
+
+The simulation we do includes: 
+1. We compare each county’s distance to the nearest food hub and simulate an alternative scenario by switching the distances between counties.
+
+2. We then recalculate the SPMA using the simulated food hub distances.
+
+This exercise allows us to estimate, while holding all other factors constant, how much closer access to a food hub could improve the market accessibility index for small farmers in counties with high levels of fruit and tree nut production.
+
+
+→ `data/outcome/spma_index_greenville_lee.csv` & `data/outcome/spma_index_yakima_okanogan.csv`
+
+### 4.2 Constructing the Choropleth Map 
+
+*Source files: `fig_01.Rmd`*
 
 The national map shades every county by its SPMA score and marks where the food hubs
 actually are. Turning the index table into that map takes a few steps:
@@ -238,7 +259,9 @@ actually are. Turning the index table into that map takes a few steps:
 
 → `figures/fig_01.pdf`
 
-### 4.3 Preparing the spider charts — `an_03.Rmd`
+### 4.3 Constructing the Spider Charts
+
+*Source files: `fig_02.Rmd`*
 
 The spider charts compare two counties across six measures at once. Those measures come
 in incompatible units — dollars, miles, percentages — so plotting raw values on shared
@@ -288,21 +311,18 @@ A free NASS QuickStats API key is also needed to pull the fruit/nut share data
 1. Clone the fork, open `2026-Data-Viz-Challenge-main.Rproj`, and confirm `data/source/`
    holds the raw inputs from §1.
 2. Set `options(tigris_use_cache = TRUE)` so boundaries download only once.
-3. Knit in order:
+3. Run the `_master.rmd`. This will load all the cleaning files, analysis, and the visualization-producing code.
 
    ```
+   _master.Rmd                        →  Runs all the programs needed to produce the outcomes and figures submitted
    cl_01_fame.Rmd                     →  fame_variables.csv
    cl_01_distance.Rmd                 →  hub_distance_full.csv
    cl_01_farmersmarket_distance.Rmd   →  farmersmarket_distance_full.csv
    cl_02_merge.Rmd                    →  distance_SPMA_merged.csv
-   ```
-
-4. Then build the index and the figures:
-
-   ```
-   an_01.Rmd   →  spma_index.csv        SPMA index
-   an_02.Rmd   →  figures/fig_01.pdf    national choropleth
-   an_03.Rmd   →  figures/fig_02.pdf    county spider charts
+   an_01.Rmd    →   spma_index.csv        SPMA index
+   an_02.Rmd    →   spma_index.csv        SPMA index what-if case
+   fig_01.Rmd   →   figures/fig_01.pdf    national choropleth
+   fig_02.Rmd   →   figures/fig_02.pdf    county spider charts
    ```
 
 ***
