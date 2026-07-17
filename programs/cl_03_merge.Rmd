@@ -1,6 +1,6 @@
 ---
 title: "cl_03_merge"
-author: "Yuanyuan Wen"
+author: "Yuanyuan Wen, Pragati Dahal, Xiaoyi Zhao"
 date: "2026-07-13"
 output: html_document
 ---

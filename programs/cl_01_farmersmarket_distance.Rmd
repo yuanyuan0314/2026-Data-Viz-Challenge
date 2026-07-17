@@ -1,6 +1,6 @@
 ---
 title: "cl_01_farmersmarket_distance"
-author: "Yuanyuan Wen"
+author: "Yuanyuan Wen, Xiaoyi Zhao, Pragati Dahal"
 date: "2026-07-07"
 output: html_document
 ---

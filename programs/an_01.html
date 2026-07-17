@@ -9,11 +9,11 @@
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
-<meta name="author" content="Pragati Dahal" />
+<meta name="author" content="Pragati Dahal, Yuanyuan Wen" />
 
 <meta name="date" content="2026-07-15" />
 
-<title>an_01b_spma_index</title>
+<title>an_01</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -350,8 +350,8 @@ display: none;
 
 
 
-<h1 class="title toc-ignore">an_01b_spma_index</h1>
-<h4 class="author">Pragati Dahal</h4>
+<h1 class="title toc-ignore">an_01</h1>
+<h4 class="author">Pragati Dahal, Yuanyuan Wen</h4>
 <h4 class="date">2026-07-15</h4>
 
 </div>
@@ -407,7 +407,7 @@ options(tigris_use_cache = TRUE)</code></pre>
 <p><code>d2c_sales_pct</code> and <code>all_sales</code> have the fewest
 missing values of any of the sales variables, so rather than relying on
 the sparser <code>intermediated_sales_pct</code> column directly, we
-back it out as the complement of DTC: <code>1 - d2c_sales_pct</code>.
+back it out as the complement of DTC: <code>100 - d2c_sales_pct</code>.
 Two observations have <code>d2c_sales_pct</code>&gt;100 (James City, VA
 and Rockdale, GA) and are assigned NA.</p>
 <pre class="r"><code>dat &lt;- dat %&gt;%

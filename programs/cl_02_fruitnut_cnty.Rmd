@@ -1,6 +1,6 @@
 ---
 title: "cl_02_fruitnut_cnty"
-author: "Yuanyuan Wen"
+author: "Yuanyuan Wen, Pragati Dahal, Xiaoyi Zhao"
 date: "2026-07-12"
 output: html_document
 ---

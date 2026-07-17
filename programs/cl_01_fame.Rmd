@@ -1,6 +1,6 @@
 ---
 title: "cl_01_fame"
-author: "Pragati Dahal"
+author: "Pragati Dahal, Yuanyuan Wen, Xiaoyi Zhao"
 date: "2026-07-07"
 output: html_document
 ---

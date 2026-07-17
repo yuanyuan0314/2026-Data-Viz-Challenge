@@ -13,7 +13,7 @@
 
 <meta name="date" content="2026-07-16" />
 
-<title>cl_01_second_nearest_hub</title>
+<title>an_02_spma_simulation</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -350,7 +350,7 @@ display: none;
 
 
 
-<h1 class="title toc-ignore">cl_01_second_nearest_hub</h1>
+<h1 class="title toc-ignore">an_02_spma_simulation</h1>
 <h4 class="author">Yuanyuan Wen</h4>
 <h4 class="date">2026-07-16</h4>
 
@@ -397,6 +397,16 @@ county_centroid &lt;- read_csv(&quot;../data/outcome/distance_SPMA_merged.csv&qu
             centroid_x, centroid_y,
             all_sales, d2c_sales_pct,distance_nearest_farmersmarket_mile, share) %&gt;%
   st_as_sf(coords = c(&quot;centroid_x&quot;, &quot;centroid_y&quot;), crs = 5070)  # 5070 = NAD83 Albers, in metres</code></pre>
+<pre><code>## New names:
+## Rows: 3144 Columns: 53
+## ── Column specification
+## ───────────────────────────────────────────────────────────────────────────── Delimiter: &quot;,&quot; chr
+## (16): county_fips, GEOID, state, county_name_hub, nearest_hub_name, hub_county_geoid, hub_cou... dbl
+## (35): distance_nearest_hub_mile, nearest_hub_id, centroid_x, centroid_y, fips, ansicode, all_... lgl
+## (2): hub_desert, farmersmarket_desert
+## ℹ Use `spec()` to retrieve the full column specification for this data. ℹ Specify the column types
+## or set `show_col_types = FALSE` to quiet this message.
+## • `...1` -&gt; `...48`</code></pre>
 <p>Load the food hub data</p>
 <pre class="r"><code>hub_raw &lt;- read_excel(&quot;../data/source/foodhub_2026-75161420.xlsx&quot;, col_types = &quot;text&quot;)
 
@@ -443,14 +453,13 @@ hub</p>
 
 second_hub_distance</code></pre>
 <pre><code>## # A tibble: 2 × 13
-##   county_fips state      county_name all_sales d2c_sales_pct distance_nearest_far…¹ share
-##   &lt;chr&gt;       &lt;chr&gt;      &lt;chr&gt;           &lt;dbl&gt;         &lt;dbl&gt;                  &lt;dbl&gt; &lt;dbl&gt;
-## 1 53047       Washington Okanogan       3.64e8         0.326                   14.8  31.8
-## 2 53077       Washington Yakima         2.27e9         0.219                   10.9  20.1
+##   county_fips state county_name all_sales d2c_sales_pct distance_nearest_far…¹ share nearest_hub_name
+##   &lt;chr&gt;       &lt;chr&gt; &lt;chr&gt;           &lt;dbl&gt;         &lt;dbl&gt;                  &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;           
+## 1 53047       Wash… Okanogan       3.64e8         0.326                   14.8  31.8 Okanogan Produc…
+## 2 53077       Wash… Yakima         2.27e9         0.219                   10.9  20.1 Gorge Grown Foo…
 ## # ℹ abbreviated name: ¹​distance_nearest_farmersmarket_mile
-## # ℹ 6 more variables: nearest_hub_name &lt;chr&gt;, nearest_hub_id &lt;chr&gt;,
-## #   distance_nearest_hub_mile &lt;dbl&gt;, second_hub_name &lt;chr&gt;, second_hub_id &lt;chr&gt;,
-## #   distance_2rd_nearest_hub_mile &lt;dbl&gt;</code></pre>
+## # ℹ 5 more variables: nearest_hub_id &lt;chr&gt;, distance_nearest_hub_mile &lt;dbl&gt;, second_hub_name &lt;chr&gt;,
+## #   second_hub_id &lt;chr&gt;, distance_2rd_nearest_hub_mile &lt;dbl&gt;</code></pre>
 </div>
 </div>
 <div id="calculate-their-new-spma" class="section level2">
@@ -471,18 +480,26 @@ second_hub_distance</code></pre>
 
 spma_index</code></pre>
 <pre><code>## # A tibble: 2 × 18
-##   county_fips state      county_name all_sales d2c_sales_pct distance_nearest_far…¹ share
-##   &lt;chr&gt;       &lt;chr&gt;      &lt;chr&gt;           &lt;dbl&gt;         &lt;dbl&gt;                  &lt;dbl&gt; &lt;dbl&gt;
-## 1 53047       Washington Okanogan       3.64e8         0.326                   14.8  31.8
-## 2 53077       Washington Yakima         2.27e9         0.219                   10.9  20.1
+##   county_fips state county_name all_sales d2c_sales_pct distance_nearest_far…¹ share nearest_hub_name
+##   &lt;chr&gt;       &lt;chr&gt; &lt;chr&gt;           &lt;dbl&gt;         &lt;dbl&gt;                  &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;           
+## 1 53047       Wash… Okanogan       3.64e8         0.326                   14.8  31.8 Okanogan Produc…
+## 2 53077       Wash… Yakima         2.27e9         0.219                   10.9  20.1 Gorge Grown Foo…
 ## # ℹ abbreviated name: ¹​distance_nearest_farmersmarket_mile
-## # ℹ 11 more variables: nearest_hub_name &lt;chr&gt;, nearest_hub_id &lt;chr&gt;,
-## #   distance_nearest_hub_mile &lt;dbl&gt;, second_hub_name &lt;chr&gt;, second_hub_id &lt;chr&gt;,
-## #   distance_2rd_nearest_hub_mile &lt;dbl&gt;, dtc_sales &lt;dbl&gt;, interm_sales &lt;dbl&gt;,
+## # ℹ 10 more variables: nearest_hub_id &lt;chr&gt;, distance_nearest_hub_mile &lt;dbl&gt;, second_hub_name &lt;chr&gt;,
+## #   second_hub_id &lt;chr&gt;, distance_2rd_nearest_hub_mile &lt;dbl&gt;, dtc_sales &lt;dbl&gt;, interm_sales &lt;dbl&gt;,
 ## #   SPMA &lt;dbl&gt;, SPMA_2rd &lt;dbl&gt;, SPMA_exchange &lt;dbl&gt;</code></pre>
 <p>rescale SPMA</p>
-<pre class="r"><code>temp_dat &lt;- read_csv(&quot;../data/outcome/SPMA_index.csv&quot;)
-min &lt;- min(log(temp_dat$SPMA+1), na.rm = TRUE)
+<pre class="r"><code>temp_dat &lt;- read_csv(&quot;../data/outcome/SPMA_index.csv&quot;)</code></pre>
+<pre><code>## Rows: 3144 Columns: 14
+## ── Column specification ─────────────────────────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr  (3): county_fips, state, county_name
+## dbl (10): distance_nearest_farmersmarket_mile, distance_nearest_hub_mile, number_foodhub, all_sal...
+## lgl  (1): has_hub
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre class="r"><code>min &lt;- min(log(temp_dat$SPMA+1), na.rm = TRUE)
 max &lt;- max(log(temp_dat$SPMA+1), na.rm = TRUE)
 
 rescale_0_100 &lt;- function(x) {
@@ -524,6 +541,16 @@ county_centroid &lt;- read_csv(&quot;../data/outcome/distance_SPMA_merged.csv&qu
             centroid_x, centroid_y,
             all_sales, d2c_sales_pct,distance_nearest_farmersmarket_mile, share) %&gt;%
   st_as_sf(coords = c(&quot;centroid_x&quot;, &quot;centroid_y&quot;), crs = 5070)  # 5070 = NAD83 Albers, in metres</code></pre>
+<pre><code>## New names:
+## Rows: 3144 Columns: 53
+## ── Column specification
+## ───────────────────────────────────────────────────────────────────────────── Delimiter: &quot;,&quot; chr
+## (16): county_fips, GEOID, state, county_name_hub, nearest_hub_name, hub_county_geoid, hub_cou... dbl
+## (35): distance_nearest_hub_mile, nearest_hub_id, centroid_x, centroid_y, fips, ansicode, all_... lgl
+## (2): hub_desert, farmersmarket_desert
+## ℹ Use `spec()` to retrieve the full column specification for this data. ℹ Specify the column types
+## or set `show_col_types = FALSE` to quiet this message.
+## • `...1` -&gt; `...48`</code></pre>
 <p>Load the food hub data</p>
 <pre class="r"><code>hub_raw &lt;- read_excel(&quot;../data/source/foodhub_2026-75161420.xlsx&quot;, col_types = &quot;text&quot;)
 
@@ -570,14 +597,13 @@ hub</p>
 
 second_hub_distance</code></pre>
 <pre><code>## # A tibble: 2 × 13
-##   county_fips state      county_name all_sales d2c_sales_pct distance_nearest_far…¹ share
-##   &lt;chr&gt;       &lt;chr&gt;      &lt;chr&gt;           &lt;dbl&gt;         &lt;dbl&gt;                  &lt;dbl&gt; &lt;dbl&gt;
-## 1 13177       Georgia    Lee          86307000       0.00695                 14.2    2.23
-## 2 45045       South Car… Greenville   26336000      18.3                      0.940  2.27
+##   county_fips state county_name all_sales d2c_sales_pct distance_nearest_far…¹ share nearest_hub_name
+##   &lt;chr&gt;       &lt;chr&gt; &lt;chr&gt;           &lt;dbl&gt;         &lt;dbl&gt;                  &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;           
+## 1 13177       Geor… Lee          86307000       0.00695                 14.2    2.23 Middle Georgia …
+## 2 45045       Sout… Greenville   26336000      18.3                      0.940  2.27 Swamp Rabbit Ca…
 ## # ℹ abbreviated name: ¹​distance_nearest_farmersmarket_mile
-## # ℹ 6 more variables: nearest_hub_name &lt;chr&gt;, nearest_hub_id &lt;chr&gt;,
-## #   distance_nearest_hub_mile &lt;dbl&gt;, second_hub_name &lt;chr&gt;, second_hub_id &lt;chr&gt;,
-## #   distance_2rd_nearest_hub_mile &lt;dbl&gt;</code></pre>
+## # ℹ 5 more variables: nearest_hub_id &lt;chr&gt;, distance_nearest_hub_mile &lt;dbl&gt;, second_hub_name &lt;chr&gt;,
+## #   second_hub_id &lt;chr&gt;, distance_2rd_nearest_hub_mile &lt;dbl&gt;</code></pre>
 </div>
 <div id="calculate-their-new-spma-1" class="section level2">
 <h2>Calculate their new SPMA</h2>
@@ -597,18 +623,26 @@ second_hub_distance</code></pre>
 
 spma_index</code></pre>
 <pre><code>## # A tibble: 2 × 18
-##   county_fips state      county_name all_sales d2c_sales_pct distance_nearest_far…¹ share
-##   &lt;chr&gt;       &lt;chr&gt;      &lt;chr&gt;           &lt;dbl&gt;         &lt;dbl&gt;                  &lt;dbl&gt; &lt;dbl&gt;
-## 1 13177       Georgia    Lee          86307000       0.00695                 14.2    2.23
-## 2 45045       South Car… Greenville   26336000      18.3                      0.940  2.27
+##   county_fips state county_name all_sales d2c_sales_pct distance_nearest_far…¹ share nearest_hub_name
+##   &lt;chr&gt;       &lt;chr&gt; &lt;chr&gt;           &lt;dbl&gt;         &lt;dbl&gt;                  &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;           
+## 1 13177       Geor… Lee          86307000       0.00695                 14.2    2.23 Middle Georgia …
+## 2 45045       Sout… Greenville   26336000      18.3                      0.940  2.27 Swamp Rabbit Ca…
 ## # ℹ abbreviated name: ¹​distance_nearest_farmersmarket_mile
-## # ℹ 11 more variables: nearest_hub_name &lt;chr&gt;, nearest_hub_id &lt;chr&gt;,
-## #   distance_nearest_hub_mile &lt;dbl&gt;, second_hub_name &lt;chr&gt;, second_hub_id &lt;chr&gt;,
-## #   distance_2rd_nearest_hub_mile &lt;dbl&gt;, dtc_sales &lt;dbl&gt;, interm_sales &lt;dbl&gt;,
+## # ℹ 10 more variables: nearest_hub_id &lt;chr&gt;, distance_nearest_hub_mile &lt;dbl&gt;, second_hub_name &lt;chr&gt;,
+## #   second_hub_id &lt;chr&gt;, distance_2rd_nearest_hub_mile &lt;dbl&gt;, dtc_sales &lt;dbl&gt;, interm_sales &lt;dbl&gt;,
 ## #   SPMA &lt;dbl&gt;, SPMA_2rd &lt;dbl&gt;, SPMA_exchange &lt;dbl&gt;</code></pre>
 <p>rescale SPMA</p>
-<pre class="r"><code>temp_dat &lt;- read_csv(&quot;../data/outcome/SPMA_index.csv&quot;)
-min &lt;- min(log(temp_dat$SPMA+1), na.rm = TRUE)
+<pre class="r"><code>temp_dat &lt;- read_csv(&quot;../data/outcome/SPMA_index.csv&quot;)</code></pre>
+<pre><code>## Rows: 3144 Columns: 14
+## ── Column specification ─────────────────────────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr  (3): county_fips, state, county_name
+## dbl (10): distance_nearest_farmersmarket_mile, distance_nearest_hub_mile, number_foodhub, all_sal...
+## lgl  (1): has_hub
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre class="r"><code>min &lt;- min(log(temp_dat$SPMA+1), na.rm = TRUE)
 max &lt;- max(log(temp_dat$SPMA+1), na.rm = TRUE)
 
 rescale_0_100 &lt;- function(x) {

@@ -1,6 +1,6 @@
 ---
 title: "an_01b_spma_index"
-author: "Xiaoyi Zhao"
+author: "Xiaoyi Zhao, Yuanyuan Wen, Pragati Dahal"
 date: "2026-07-15"
 output: html_document
 ---
