@@ -397,16 +397,6 @@ county_centroid &lt;- read_csv(&quot;../data/outcome/distance_SPMA_merged.csv&qu
             centroid_x, centroid_y,
             all_sales, d2c_sales_pct,distance_nearest_farmersmarket_mile, share) %&gt;%
   st_as_sf(coords = c(&quot;centroid_x&quot;, &quot;centroid_y&quot;), crs = 5070)  # 5070 = NAD83 Albers, in metres</code></pre>
-<pre><code>## New names:
-## Rows: 3144 Columns: 53
-## ── Column specification
-## ───────────────────────────────────────────────────────────────── Delimiter: &quot;,&quot; chr
-## (16): county_fips, GEOID, state, county_name_hub, nearest_hub_name, hub_county_ge... dbl
-## (35): distance_nearest_hub_mile, nearest_hub_id, centroid_x, centroid_y, fips, an... lgl
-## (2): hub_desert, farmersmarket_desert
-## ℹ Use `spec()` to retrieve the full column specification for this data. ℹ Specify the
-## column types or set `show_col_types = FALSE` to quiet this message.
-## • `...1` -&gt; `...48`</code></pre>
 <p>Load the food hub data</p>
 <pre class="r"><code>hub_raw &lt;- read_excel(&quot;../data/source/foodhub_2026-75161420.xlsx&quot;, col_types = &quot;text&quot;)
 
@@ -491,17 +481,8 @@ spma_index</code></pre>
 ## #   distance_2rd_nearest_hub_mile &lt;dbl&gt;, dtc_sales &lt;dbl&gt;, interm_sales &lt;dbl&gt;,
 ## #   SPMA &lt;dbl&gt;, SPMA_2rd &lt;dbl&gt;, SPMA_exchange &lt;dbl&gt;</code></pre>
 <p>rescale SPMA</p>
-<pre class="r"><code>temp_dat &lt;- read_csv(&quot;../data/outcome/SPMA_index.csv&quot;)</code></pre>
-<pre><code>## Rows: 3144 Columns: 14
-## ── Column specification ─────────────────────────────────────────────────────────────────
-## Delimiter: &quot;,&quot;
-## chr  (3): county_fips, state, county_name
-## dbl (10): distance_nearest_farmersmarket_mile, distance_nearest_hub_mile, number_food...
-## lgl  (1): has_hub
-## 
-## ℹ Use `spec()` to retrieve the full column specification for this data.
-## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
-<pre class="r"><code>min &lt;- min(log(temp_dat$SPMA+1), na.rm = TRUE)
+<pre class="r"><code>temp_dat &lt;- read_csv(&quot;../data/outcome/SPMA_index.csv&quot;)
+min &lt;- min(log(temp_dat$SPMA+1), na.rm = TRUE)
 max &lt;- max(log(temp_dat$SPMA+1), na.rm = TRUE)
 
 rescale_0_100 &lt;- function(x) {
@@ -543,16 +524,6 @@ county_centroid &lt;- read_csv(&quot;../data/outcome/distance_SPMA_merged.csv&qu
             centroid_x, centroid_y,
             all_sales, d2c_sales_pct,distance_nearest_farmersmarket_mile, share) %&gt;%
   st_as_sf(coords = c(&quot;centroid_x&quot;, &quot;centroid_y&quot;), crs = 5070)  # 5070 = NAD83 Albers, in metres</code></pre>
-<pre><code>## New names:
-## Rows: 3144 Columns: 53
-## ── Column specification
-## ───────────────────────────────────────────────────────────────── Delimiter: &quot;,&quot; chr
-## (16): county_fips, GEOID, state, county_name_hub, nearest_hub_name, hub_county_ge... dbl
-## (35): distance_nearest_hub_mile, nearest_hub_id, centroid_x, centroid_y, fips, an... lgl
-## (2): hub_desert, farmersmarket_desert
-## ℹ Use `spec()` to retrieve the full column specification for this data. ℹ Specify the
-## column types or set `show_col_types = FALSE` to quiet this message.
-## • `...1` -&gt; `...48`</code></pre>
 <p>Load the food hub data</p>
 <pre class="r"><code>hub_raw &lt;- read_excel(&quot;../data/source/foodhub_2026-75161420.xlsx&quot;, col_types = &quot;text&quot;)
 
@@ -636,17 +607,8 @@ spma_index</code></pre>
 ## #   distance_2rd_nearest_hub_mile &lt;dbl&gt;, dtc_sales &lt;dbl&gt;, interm_sales &lt;dbl&gt;,
 ## #   SPMA &lt;dbl&gt;, SPMA_2rd &lt;dbl&gt;, SPMA_exchange &lt;dbl&gt;</code></pre>
 <p>rescale SPMA</p>
-<pre class="r"><code>temp_dat &lt;- read_csv(&quot;../data/outcome/SPMA_index.csv&quot;)</code></pre>
-<pre><code>## Rows: 3144 Columns: 14
-## ── Column specification ─────────────────────────────────────────────────────────────────
-## Delimiter: &quot;,&quot;
-## chr  (3): county_fips, state, county_name
-## dbl (10): distance_nearest_farmersmarket_mile, distance_nearest_hub_mile, number_food...
-## lgl  (1): has_hub
-## 
-## ℹ Use `spec()` to retrieve the full column specification for this data.
-## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
-<pre class="r"><code>min &lt;- min(log(temp_dat$SPMA+1), na.rm = TRUE)
+<pre class="r"><code>temp_dat &lt;- read_csv(&quot;../data/outcome/SPMA_index.csv&quot;)
+min &lt;- min(log(temp_dat$SPMA+1), na.rm = TRUE)
 max &lt;- max(log(temp_dat$SPMA+1), na.rm = TRUE)
 
 rescale_0_100 &lt;- function(x) {

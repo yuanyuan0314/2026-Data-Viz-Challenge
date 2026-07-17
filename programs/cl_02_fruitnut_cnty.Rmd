@@ -19,6 +19,7 @@ library(tidyverse)
 ```
 
 # API Setup
+
 ```{r API}
 # nassqs_auth(key = "your NASS API")
 

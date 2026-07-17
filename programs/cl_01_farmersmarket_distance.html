@@ -395,12 +395,9 @@ market_directory &lt;- market_raw %&gt;%
   rename(lon = location_x, lat = location_y) %&gt;%
   mutate(lon = as.numeric(lon),
          lat = as.numeric(lat)) %&gt;%
-  filter(!is.na(lon), !is.na(lat))</code></pre>
-<pre><code>## Warning: There was 1 warning in `mutate()`.
-## ℹ In argument: `lat = as.numeric(lat)`.
-## Caused by warning:
-## ! NAs introduced by coercion</code></pre>
-<pre class="r"><code>#glimpse(market_directory)</code></pre>
+  filter(!is.na(lon), !is.na(lat))
+
+#glimpse(market_directory)</code></pre>
 <p>make the markets spatial, and look up which county each market sits
 in</p>
 <pre class="r"><code>markets_sf &lt;- st_as_sf(market_directory, coords = c(&quot;lon&quot;, &quot;lat&quot;), crs = 4326)

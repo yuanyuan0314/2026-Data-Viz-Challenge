@@ -112,10 +112,10 @@ fig_01c_annotated <- ggplot(map_df) +
   coord_sf(crs = 5070) +
   theme_void(base_family = "body_font") +
   labs(
-    title = "Small-Producers' Market Accessibility(SPMA)",
+    title = "Small-Producers' Market Accessibility (SPMA)",
     subtitle = paste0(
-      "How market access connects fruit and tree nut producers ",
-      "to consumers and food hubs"
+      "How food hubs connect local fruit and tree nut producers ",
+      "to consumers and improve market access."
     )
   ) +
   theme(
@@ -282,8 +282,7 @@ rural_note <- ggplot() +
     y = 0.62,
     label = paste0(
       "Missing SPMA values mainly reflect unavailable or suppressed sales data.\n",
-      "These gaps are more common in rural counties and places with fewer fruit\n",
-      "and tree nut farms."
+      "These gaps are more common in the middle of U.S."
     ),
     hjust = 0,
     vjust = 1,

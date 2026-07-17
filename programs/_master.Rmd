@@ -95,7 +95,8 @@ rmarkdown::render("../programs/cl_01_farmersmarket_distance.Rmd")
 rmarkdown::render("../programs/cl_01_fame.Rmd")
 ```
 ###### 3d: Compute each county's fruit & nut share = (county fruit & nut sales) / (county total farm-related income receipts), using USDA-NASS data.
-(This will require the user to input their own USDA API key)
+
+**This will require the user to input their own USDA API key, by modifying line 24 in the `cl_02_fruitnut_cnty.Rmd`**
 ```{r}
 rmarkdown::render("../programs/cl_02_fruitnut_cnty.Rmd")
 ```
@@ -124,3 +125,4 @@ rmarkdown::render("../programs/fig_01.Rmd")
 rmarkdown::render("../programs/fig_02.Rmd")
 ```
 
+**Note: If rendering does not work, you can also open the file and run the file under the R proj**
