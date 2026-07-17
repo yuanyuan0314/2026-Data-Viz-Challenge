@@ -1,6 +1,6 @@
 ---
 title: "an_02_spma_simulation"
-author: "Yuanyuan Wen"
+author: "Yuanyuan Wen, Pragati Dahal, Xiaoyi Zhao"
 date: "2026-07-16"
 output: html_document
 ---
