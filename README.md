@@ -334,7 +334,7 @@ A free NASS QuickStats API key is also needed to pull the fruit/nut share data
 
 ## 6. Use of generative AI
 
-We used generative AI (Claude) as a general-purpose coding assistant: tidying and reorganizing R code, 
+We used generative AI (Claude, Chatgpt) as a general-purpose coding assistant: tidying and reorganizing R code, 
 resolving errors, and editing documentation. It was not used to design the index, select variables, or interpret results. 
 All outputs were reviewed and verified by the authors.
 
